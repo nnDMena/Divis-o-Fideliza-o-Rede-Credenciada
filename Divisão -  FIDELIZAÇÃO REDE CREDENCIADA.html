@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Divisão • Fidelização Rede Credenciada</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  
+  <!-- Leaflet CSS & JS for 100% Geographically Exact Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            hap: {
+              blue: '#0B3B9E',
+              blueDark: '#072A75',
+              blueLight: '#1D63DC',
+              orange: '#FF5A00',
+              orangeHover: '#E04F00',
+              red: '#E11D48',
+              bg: '#F3F5F9',
+              border: '#E2E8F0',
+              mapBg: '#EBF1F8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .leaflet-container {
+      background: radial-gradient(circle at 50% 45%, #F8FAFC 0%, #EBF2FA 70%, #DCE6F2 100%) !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    
+    .dark .leaflet-container {
+      background: radial-gradient(circle at 50% 45%, #0F172A 0%, #090D16 70%, #020617 100%) !important;
+    }
+    
+    .leaflet-control-attribution {
+      display: none !important;
+    }
+    
+    .leaflet-bar a {
+      background-color: #ffffff !important;
+      color: #0B3B9E !important;
+      border-color: #CBD5E1 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.06) !important;
+    }
+    .dark .leaflet-bar a {
+      background-color: #1E293B !important;
+      color: #38BDF8 !important;
+      border-color: #334155 !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: #0B3B9E !important;
+      color: #ffffff !important;
+    }
+
+    .custom-leaflet-tooltip {
+      background: #ffffff !important;
+      border: 1px solid #CBD5E1 !important;
+      border-top: 4px solid #0B3B9E !important;
+      border-radius: 10px !important;
+      color: #1E293B !important;
+      padding: 10px 14px !important;
+      box-shadow: 0 12px 28px -6px rgba(11, 59, 158, 0.22) !important;
+      font-size: 12px !important;
+    }
+    .dark .custom-leaflet-tooltip {
+      background: #1E293B !important;
+      border: 1px solid #334155 !important;
+      border-top: 4px solid #38BDF8 !important;
+      color: #F8FAFC !important;
+    }
+    .custom-leaflet-tooltip::before {
+      border-top-color: #ffffff !important;
+    }
+    .dark .custom-leaflet-tooltip::before {
+      border-top-color: #1E293B !important;
+    }
+
+    .state-label-marker {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    .state-label-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(15, 23, 42, 0.9), 0 0 5px rgba(15, 23, 42, 0.75);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    .dark ::-webkit-scrollbar-track {
+      background: #0F172A;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
+
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-hap-bg dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans selection:bg-hap-blue selection:text-white transition-colors duration-200">
+
+  <!-- BARRA SUPERIOR AZUL INSTITUCIONAL HAPVIDA -->
+  <header id="appHeader" class="bg-hap-blue text-white shadow-md sticky top-0 z-40 no-print border-b border-hap-blueDark transition-colors duration-200">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <div class="flex items-center space-x-3.5">
+        <h1 class="text-sm sm:text-base font-bold text-white tracking-tight">Divisão • Fidelização Rede Credenciada</h1>
+        <span class="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-hap-orange text-white shadow-sm">
+          100% Alocado • Base Completa
+        </span>
+      </div>
+
+      <div class="flex-1 max-w-md hidden lg:block">
+        <div class="relative">
+          <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-2.5 text-blue-200"></i>
+          <input type="text" id="globalSearch" oninput="handleGlobalSearch(this.value)" placeholder="Pesquise qualquer Cidade, UF ou Gestor..." class="w-full bg-hap-blueDark/80 hover:bg-hap-blueDark border border-blue-400/30 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-blue-200/80 focus:outline-none focus:bg-white focus:text-slate-900 focus:placeholder-slate-400 transition">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="toggleTheme()" class="px-3 py-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg flex items-center gap-1.5 transition" title="Alternar Tema Claro / Escuro">
+          <i id="themeIcon" class="ph-bold ph-moon text-base"></i>
+          <span class="hidden sm:inline" id="themeText">Tema Escuro</span>
+        </button>
+        <button onclick="openDirectoryModal()" class="px-3 py-1.5 text-xs font-bold bg-white text-hap-blue hover:bg-blue-50 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+          <i class="ph-bold ph-table"></i>
+          <span>Base de Cidades</span>
+        </button>
+        <button onclick="resetAllViews()" class="px-3 py-1.5 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg flex items-center gap-1.5 transition">
+          <i class="ph-bold ph-arrows-counter-clockwise"></i>
+          <span class="hidden xl:inline">Resetar</span>
+        </button>
+        <button onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-hap-orange hover:bg-hap-orangeHover text-white rounded-lg flex items-center gap-1.5 shadow-sm transition" title="Exportar PDF / Imprimir">
+          <i class="ph-bold ph-printer"></i>
+          <span class="hidden sm:inline">Exportar / PDF</span>
+        </button>
+        <button onclick="toggleFullScreen()" class="p-2 text-xs font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-lg transition" title="Modo Apresentação (Tela Cheia)">
+          <i class="ph-bold ph-arrows-out text-base"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- CARDS DE INDICADORES EXECUTIVOS (KPIs) -->
+  <section class="max-w-[1720px] mx-auto px-4 sm:px-6 pt-4 pb-2 w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    
+    <div onclick="openDirectoryModal('all')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-hap-blue">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>Municípios Mapeados</span>
+        <span class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-hap-blue dark:text-sky-400 flex items-center justify-center">
+          <i class="ph-bold ph-buildings text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">5.570</div>
+      <div class="text-[11px] text-hap-blue dark:text-sky-400 font-semibold mt-0.5">27 UFs • Base Consolidada</div>
+    </div>
+
+    <div onclick="setManagerFilter('amanda')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-hap-blueLight">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>Amanda Regina</span>
+        <span class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-hap-blueLight flex items-center justify-center">
+          <i class="ph-bold ph-compass text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">2.883 <span class="text-xs font-semibold text-slate-400">mun.</span></div>
+      <div class="text-[11px] text-hap-blueLight font-semibold mt-0.5">N + NE (2.244) + MG (639)</div>
+    </div>
+
+    <div onclick="setManagerFilter('diego')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-emerald-600">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>Diego Godoi</span>
+        <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <i class="ph-bold ph-map-pin text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">1.500 <span class="text-xs font-semibold text-slate-400">mun.</span></div>
+      <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Sul (1.191) + SP Oeste (309)</div>
+    </div>
+
+    <div onclick="setManagerFilter('murilo')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-rose-600">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>Murilo Adolfo</span>
+        <span class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+          <i class="ph-bold ph-globe-hemisphere-west text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">681 <span class="text-xs font-semibold text-slate-400">mun.</span></div>
+      <div class="text-[11px] text-rose-600 dark:text-rose-400 font-semibold mt-0.5">CO (467) + MG Sul/Triâng. (214)</div>
+    </div>
+
+    <div onclick="setManagerFilter('joao')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-hap-orange">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>João Henrique</span>
+        <span class="w-7 h-7 rounded-lg bg-orange-50 dark:bg-orange-950/60 text-hap-orange flex items-center justify-center">
+          <i class="ph-bold ph-navigation-arrow text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">467 <span class="text-xs font-semibold text-slate-400">mun.</span></div>
+      <div class="text-[11px] text-hap-orange font-semibold mt-0.5">SP (297 incl. RAs 14/16) + RJ (92) + ES (78)</div>
+    </div>
+
+    <div onclick="openSpModal('cities')" class="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl shadow-sm hover:shadow-md transition border-t-4 border-t-purple-600">
+      <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">
+        <span>Lorena & Marcela</span>
+        <span class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+          <i class="ph-bold ph-buildings text-base"></i>
+        </span>
+      </div>
+      <div class="text-2xl font-extrabold text-slate-800 dark:text-slate-100">39 <span class="text-xs font-semibold text-slate-400">mun.</span></div>
+      <div class="text-[11px] text-purple-700 dark:text-purple-400 font-semibold mt-0.5">1ª RA Grande SP (50% / 50%)</div>
+    </div>
+
+  </section>
+
+  <!-- FILTRO SELETOR DE GERENTES -->
+  <section class="max-w-[1720px] mx-auto px-4 sm:px-6 py-2 w-full no-print">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 shadow-sm flex flex-wrap items-center justify-between gap-2.5">
+      
+      <div class="flex items-center gap-2 text-xs font-bold text-hap-blue dark:text-sky-400 uppercase tracking-wider px-2">
+        <i class="ph-bold ph-funnel text-hap-orange text-sm"></i>
+        <span>Filtrar por Alocação da Planilha:</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-1.5" id="managerPillsContainer">
+        
+        <button onclick="setManagerFilter('all')" data-id="all" class="mgr-filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-hap-blue text-white shadow-sm border border-hap-blue transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-white"></span>
+          <span>Todos (5.570)</span>
+        </button>
+
+        <button onclick="setManagerFilter('amanda')" data-id="amanda" class="mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-hap-blue"></span>
+          <span>Amanda</span>
+          <span class="text-[10px] text-hap-blue dark:text-sky-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded font-mono font-semibold">2.883</span>
+        </button>
+
+        <button onclick="setManagerFilter('diego')" data-id="diego" class="mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+          <span>Diego</span>
+          <span class="text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded font-mono font-semibold">1.500</span>
+        </button>
+
+        <button onclick="setManagerFilter('murilo')" data-id="murilo" class="mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+          <span>Murilo</span>
+          <span class="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 rounded font-mono font-semibold">681</span>
+        </button>
+
+        <button onclick="setManagerFilter('joao')" data-id="joao" class="mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-hap-orange"></span>
+          <span>João Henrique</span>
+          <span class="text-[10px] text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-1.5 py-0.5 rounded font-mono font-semibold">467</span>
+        </button>
+
+        <button onclick="setManagerFilter('lorena_marcela')" data-id="lorena_marcela" class="mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+          <span>Lorena & Marcela</span>
+          <span class="text-[10px] text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-1.5 py-0.5 rounded font-mono font-semibold">39 (RMSP)</span>
+        </button>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CORPO PRINCIPAL COM MAPA LEAFLET & PAINEL DE DETALHES -->
+  <main class="max-w-[1720px] mx-auto px-4 sm:px-6 py-2 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch mb-6">
+    
+    <!-- COLUNA DO MAPA CENTRAL -->
+    <div class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm flex flex-col justify-between relative overflow-hidden min-h-[580px] lg:min-h-[650px]">
+      
+      <div class="p-4 sm:px-6 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-hap-red block mb-0.5">
+            FIDELIZAÇÃO E GESTÃO DA REDE CREDENCIADA • BASE MUNICIPAL
+          </span>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <h2 class="text-base sm:text-lg font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
+              Mapa Georreferenciado de Abrangência Nacional
+            </h2>
+            <span id="currentStatusBadge" class="text-[11px] font-bold text-white bg-hap-blueLight px-2.5 py-0.5 rounded-md shadow-xs">
+              Visualização Nacional Completa (5.570 Municípios)
+            </span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openSpModal('managers')" class="px-3 py-1.5 rounded-full bg-hap-orange hover:bg-hap-orangeHover text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+            <i class="ph-bold ph-buildings"></i>
+            <span>SP Completo (645 Cidades • 16 RAs)</span>
+          </button>
+
+          <button onclick="openMgModal()" class="px-3 py-1.5 rounded-full bg-hap-blue hover:bg-hap-blueDark text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+            <i class="ph-bold ph-tree-structure"></i>
+            <span>MG Completo (853 Cidades)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="relative w-full flex-grow overflow-hidden min-h-[460px] bg-hap-mapBg dark:bg-slate-950">
+        <div id="map" class="w-full h-full min-h-[460px]"></div>
+
+        <div id="mapLoader" class="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center z-[1000] transition-opacity duration-300">
+          <div class="w-10 h-10 border-4 border-hap-blue border-t-hap-orange rounded-full animate-spin mb-3"></div>
+          <div class="text-xs font-bold text-hap-blue dark:text-sky-400">Carregando Malha Geográfica Oficial...</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Polígonos estaduais de alta precisão IBGE</div>
+        </div>
+
+        <div class="absolute bottom-3 left-3 z-[900] bg-hap-blue text-white p-3.5 rounded-xl text-[11px] max-w-sm shadow-lg hidden sm:block pointer-events-none border-b-4 border-hap-orange">
+          <div class="flex items-center gap-1.5 font-extrabold text-white text-xs mb-1">
+            <i class="ph-fill ph-chat-circle-dots text-hap-orange text-base"></i>
+            <span>Faz bem saber • Resumo da Planilha</span>
+          </div>
+          <span class="text-blue-100 leading-relaxed block">
+            <strong>SP (645 mun.):</strong> 309 Diego (RAs 7–11 e 13) • 297 João Henrique (RAs 2–6, 12, 14 e 16) • 39 Lorena & Marcela (1ª RA RMSP).<br>
+            <strong>MG (853 mun.):</strong> 639 Amanda Regina (10 Mesos) • 214 Murilo Adolfo (2 Mesos).<br>
+            <span class="text-[10px] text-sky-200">*100% dos 5.570 municípios brasileiros alocados.</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex flex-wrap items-center gap-3.5">
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onclick="setManagerFilter('amanda')">
+            <span class="w-3 h-3 rounded-full bg-hap-blue shadow-xs"></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">Amanda (2.883)</span>
+          </div>
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onclick="setManagerFilter('diego')">
+            <span class="w-3 h-3 rounded-full bg-emerald-600 shadow-xs"></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">Diego (1.500)</span>
+          </div>
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onclick="setManagerFilter('murilo')">
+            <span class="w-3 h-3 rounded-full bg-rose-600 shadow-xs"></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">Murilo (681)</span>
+          </div>
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onclick="setManagerFilter('joao')">
+            <span class="w-3 h-3 rounded-full bg-hap-orange shadow-xs"></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">João Henrique (467)</span>
+          </div>
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80" onclick="setManagerFilter('lorena_marcela')">
+            <span class="w-3 h-3 rounded-full bg-purple-600 shadow-xs"></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">Lorena & Marcela (39)</span>
+          </div>
+        </div>
+
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+          Clique no estado para inspecionar ou listar suas cidades
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUNA LATERAL DE INSPEÇÃO TERRITORIAL -->
+    <div class="lg:col-span-4 flex flex-col space-y-4">
+      
+      <div id="inspectorCard" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+        
+        <div class="bg-hap-blue px-5 py-3 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2 font-bold text-sm">
+            <i class="ph-bold ph-compass text-hap-orange text-lg"></i>
+            <span>Inspeção Territorial & Gestor</span>
+          </div>
+          <span class="text-[10px] uppercase tracking-wider bg-white/15 px-2 py-0.5 rounded font-semibold">Ficha Executiva</span>
+        </div>
+
+        <div class="p-5">
+          <div class="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3.5 mb-3.5">
+            <div>
+              <span class="text-[10px] font-bold tracking-widest text-hap-red uppercase block">Unidade Federativa / Escopo</span>
+              <h3 id="inspectUfTitle" class="text-lg font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-2 mt-0.5">
+                <span>Selecione uma UF ou Gerente</span>
+              </h3>
+              <span id="inspectUfSubtitle" class="text-xs text-slate-500 dark:text-slate-400">Passe o mouse ou clique no mapa para examinar</span>
+            </div>
+            <div id="inspectUfBadge" class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-slate-800 border-2 border-hap-blue flex items-center justify-center text-lg font-black text-hap-blue dark:text-sky-400 shrink-0">
+              BR
+            </div>
+          </div>
+
+          <div class="space-y-3.5 text-xs">
+            
+            <div class="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-800">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Gerência Médica Responsável</span>
+              <div id="inspectManagerName" class="text-sm font-bold text-hap-blue dark:text-sky-400 flex items-center gap-2">
+                <span id="inspectManagerDot" class="w-2.5 h-2.5 rounded-full bg-hap-blue"></span>
+                <span>Visão Panorâmica Nacional</span>
+              </div>
+              <div id="inspectManagerRole" class="text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">
+                Base oficial de 5.570 municípios brasileiros 100% distribuídos por gerência médica, incluindo as RAs 14 (Franca) e 16 (Itapeva) alocadas para João Henrique.
+              </div>
+            </div>
+
+            <div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Detalhamento de Municípios na Planilha</span>
+              <div id="inspectScopeDetails" class="p-3.5 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 leading-relaxed font-mono text-[11px] max-h-44 overflow-y-auto">
+                • Amanda Regina: 2.883 municípios (N + NE + 10 Mesos MG)<br>
+                • Diego Godoi: 1.500 municípios (PR, SC, RS + 6 RAs SP)<br>
+                • Murilo Adolfo: 681 municípios (DF, GO, MT, MS + 2 Mesos MG)<br>
+                • João Henrique: 467 municípios (RJ, ES + 352 SP incl. RAs 14/16)<br>
+                • Lorena & Marcela: 39 municípios (1ª RA Grande SP)
+              </div>
+            </div>
+
+            <div id="inspectActionButtons" class="pt-1">
+              <button onclick="openDirectoryModal('all')" class="w-full py-2.5 px-4 bg-hap-blue hover:bg-hap-blueDark text-white font-bold rounded-full text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="ph-bold ph-magnifying-glass text-base"></i>
+                Consultar Todos os 5.570 Municípios da Base
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- QUADRO CONSOLIDADO DAS GERÊNCIAS -->
+      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex-grow flex flex-col justify-between">
+        <div>
+          <div class="bg-hap-blue px-5 py-3 text-white flex items-center justify-between">
+            <div class="flex items-center gap-2 font-bold text-sm">
+              <i class="ph-bold ph-users-four text-hap-orange text-lg"></i>
+              <span>Quadro Consolidado da Planilha</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full bg-hap-orange text-white text-[10px] font-extrabold">5.570 Mun.</span>
+          </div>
+          
+          <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+            
+            <div onclick="setManagerFilter('amanda')" class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-hap-blue mt-1 shrink-0"></span>
+                <div>
+                  <strong class="text-slate-800 dark:text-slate-100 block font-bold">Amanda Regina Marques Lira</strong>
+                  <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">Norte (450) + Nordeste (1.794) + 10 Mesorregiões MG (639)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-blue-50 dark:bg-blue-950/60 text-hap-blue dark:text-sky-400 font-mono font-bold rounded text-[10px] shrink-0">2.883 mun.</span>
+            </div>
+
+            <div onclick="setManagerFilter('diego')" class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 mt-1 shrink-0"></span>
+                <div>
+                  <strong class="text-slate-800 dark:text-slate-100 block font-bold">Diego Godoi Bernardes da Silva</strong>
+                  <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">PR (399), RS (497), SC (295) + Interior Oeste SP RAs 7–11 e 13 (309)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-mono font-bold rounded text-[10px] shrink-0">1.500 mun.</span>
+            </div>
+
+            <div onclick="setManagerFilter('murilo')" class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-600 mt-1 shrink-0"></span>
+                <div>
+                  <strong class="text-slate-800 dark:text-slate-100 block font-bold">Murilo Adolfo Fernandes</strong>
+                  <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">DF (1), GO (246), MT (141), MS (79) + Sul/Triângulo MG (214)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 font-mono font-bold rounded text-[10px] shrink-0">681 mun.</span>
+            </div>
+
+            <div onclick="setManagerFilter('joao')" class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-hap-orange mt-1 shrink-0"></span>
+                <div>
+                  <strong class="text-slate-800 dark:text-slate-100 block font-bold">João Henrique de Souza</strong>
+                  <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">SP RAs 2–6, 12, 14 e 16 (352) + RJ (92) + ES (78)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 font-mono font-bold rounded text-[10px] shrink-0">467 mun.</span>
+            </div>
+
+            <div onclick="openSpModal('cities')" class="p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-600 mt-1 shrink-0"></span>
+                <div>
+                  <strong class="text-slate-800 dark:text-slate-100 block font-bold">Lorena de Souza & Marcela Usberti</strong>
+                  <p class="text-slate-500 dark:text-slate-400 text-[11px] mt-0.5">1ª RA Grande São Paulo (Divisão 50/50 nos 39 municípios da RMSP)</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 font-mono font-bold rounded text-[10px] shrink-0">39 mun.</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+          <span>Base 100% Alocada • RAs 14 e 16 alocadas com João Henrique</span>
+          <button onclick="openDirectoryModal('all')" class="text-hap-blue dark:text-sky-400 font-bold hover:underline">Ver Tabela Completa &rarr;</button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL EXECUTIVO: SÃO PAULO (645 MUNICÍPIOS) -->
+  <div id="spModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200 text-slate-800 dark:text-slate-100">
+      
+      <div class="p-5 bg-hap-blue text-white flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-xl bg-white text-hap-blue flex items-center justify-center text-xl font-black shadow-sm">
+            SP
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-300 block">Detalhamento Municipal • Estado de São Paulo (645 Municípios)</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">
+              Alocação Oficial nas Regiões Administrativas (Diego: 309 • João Henrique: 352 • Lorena & Marcela: 39)
+            </h3>
+          </div>
+        </div>
+        <button onclick="closeSpModal()" class="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="px-5 pt-3 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-2">
+        <button id="btnSpTabManagers" onclick="setSpModalTab('managers')" class="px-3.5 py-2 text-xs font-bold text-hap-blue border-b-2 border-hap-orange bg-white dark:bg-slate-900 dark:text-sky-400 rounded-t-lg transition flex items-center gap-1.5">
+          <i class="ph-bold ph-chart-pie-slice"></i>
+          <span>Resumo das RAs</span>
+        </button>
+        <button id="btnSpTabCities" onclick="setSpModalTab('cities')" class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-purple-600"></span>
+          <span>Lorena & Marcela (39 RMSP)</span>
+        </button>
+        <button id="btnSpTabDiego" onclick="setSpModalTab('diego')" class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          <span>Diego em SP (309)</span>
+        </button>
+        <button id="btnSpTabJoao" onclick="setSpModalTab('joao')" class="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-hap-orange"></span>
+          <span>João Henrique em SP (352 • Inclui RAs 14 e 16)</span>
+        </button>
+      </div>
+
+      <div id="spTabManagersContent" class="p-5 overflow-y-auto max-h-[65vh] space-y-4 bg-hap-bg dark:bg-slate-950">
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 border-l-purple-600 rounded-xl p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-purple-600"></span>
+              <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Lorena de Souza Santana & Marcela Usberti Gutierre</h4>
+            </div>
+            <span class="text-[11px] font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-900">
+              1ª RA Grande São Paulo • 39 Municípios (Divisão 50% / 50%)
+            </span>
+          </div>
+          <div class="p-3 bg-purple-50/70 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/50 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="text-purple-900 dark:text-purple-200 font-medium"><strong>Status na planilha:</strong> Gestão compartilhada da Região Metropolitana de São Paulo.</span>
+            <button onclick="setSpModalTab('cities')" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full text-xs shadow-xs transition">
+              Ver 39 Cidades &rarr;
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 border-l-emerald-600 rounded-xl p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-600"></span>
+              <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Diego Godoi Bernardes da Silva</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-900">
+                309 Municípios em SP (RAs 7 a 11 e 13)
+              </span>
+              <button onclick="setSpModalTab('diego')" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline">Listar 309 cidades &rarr;</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">7ª RA:</span> Bauru</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">8ª RA:</span> São José do Rio Preto</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">9ª RA:</span> Araçatuba</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">10ª RA:</span> Presidente Prudente</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">11ª RA:</span> Marília</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-emerald-600 dark:text-emerald-400 font-bold font-mono">13ª RA:</span> Barretos</div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 border-l-hap-orange rounded-xl p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-hap-orange"></span>
+              <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">João Henrique de Souza</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-orange-700 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/60 px-3 py-1 rounded-full border border-orange-200 dark:border-orange-900">
+                352 Municípios em SP (RAs 2–6, 12, 14 e 16)
+              </span>
+              <button onclick="setSpModalTab('joao')" class="text-xs font-bold text-hap-orange hover:underline">Listar 352 cidades &rarr;</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">2ª RA:</span> Santos</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">2Aª RA:</span> Registro</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">3ª RA:</span> São José dos Campos</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">4ª RA:</span> Sorocaba</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">5ª RA:</span> Campinas</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">6ª RA:</span> Ribeirão Preto</div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300"><span class="text-hap-orange font-bold font-mono">12ª RA:</span> Central (Araraquara/S.Carlos)</div>
+            <div class="p-2.5 bg-orange-50/70 dark:bg-orange-950/40 rounded-lg border border-orange-200 dark:border-orange-900 font-semibold text-slate-800 dark:text-slate-100"><span class="text-hap-orange font-bold font-mono">14ª RA:</span> Franca (23 municípios)</div>
+            <div class="p-2.5 bg-orange-50/70 dark:bg-orange-950/40 rounded-lg border border-orange-200 dark:border-orange-900 font-semibold text-slate-800 dark:text-slate-100"><span class="text-hap-orange font-bold font-mono">16ª RA:</span> Itapeva (32 municípios)</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="spTabListContent" class="hidden p-5 flex flex-col overflow-hidden bg-hap-bg dark:bg-slate-950">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div class="relative flex-1 min-w-[240px]">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-2.5 text-slate-400"></i>
+            <input type="text" id="spModalCitySearch" oninput="filterSpModalCities(this.value)" placeholder="Pesquisar município neste recorte de São Paulo..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-hap-blue">
+          </div>
+          <span id="spModalCountBadge" class="text-xs text-hap-blue dark:text-sky-400 bg-blue-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-blue-200 dark:border-slate-700 font-mono font-bold">39 Municípios</span>
+        </div>
+
+        <div class="overflow-y-auto max-h-[52vh] pr-1">
+          <div id="spModalGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs"></div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Total Estado de São Paulo: <strong>645 municípios</strong> (100% IBGE)</span>
+        <button onclick="closeSpModal()" class="px-6 py-2 bg-hap-blue hover:bg-hap-blueDark text-white rounded-full text-xs font-bold transition shadow-xs">
+          Fechar Detalhamento
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL EXECUTIVO: MINAS GERAIS (853 MUNICÍPIOS) -->
+  <div id="mgModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200 text-slate-800 dark:text-slate-100">
+      
+      <div class="p-5 bg-hap-blue text-white flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-xl bg-white text-hap-blue flex items-center justify-center text-xl font-black shadow-sm">
+            MG
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-300 block">Detalhamento Regional • Minas Gerais (853 Municípios)</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">
+              Divisão Oficial: 639 Cidades Amanda (10 Mesos) & 214 Cidades Murilo (2 Mesos)
+            </h3>
+          </div>
+        </div>
+        <button onclick="closeMgModal()" class="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="px-5 pt-3 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex flex-wrap items-center gap-2">
+        <button id="btnMgTabSummary" onclick="setMgModalTab('summary')" class="px-4 py-2 text-xs font-bold text-hap-blue border-b-2 border-hap-orange bg-white dark:bg-slate-900 dark:text-sky-400 rounded-t-lg transition">
+          Visão por Mesorregiões (12)
+        </button>
+        <button id="btnMgTabAmanda" onclick="setMgModalTab('amanda')" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-hap-blue"></span>
+          <span>Cidades Amanda em MG (639)</span>
+        </button>
+        <button id="btnMgTabMurilo" onclick="setMgModalTab('murilo')" class="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+          <span>Cidades Murilo em MG (214)</span>
+        </button>
+      </div>
+
+      <div id="mgTabSummaryContent" class="p-5 overflow-y-auto max-h-[65vh] space-y-4 bg-hap-bg dark:bg-slate-950">
+        
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 border-l-hap-blue rounded-xl p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-hap-blue"></span>
+              <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Amanda Regina Marques Lira</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-hap-blue dark:text-sky-400 bg-blue-50 dark:bg-blue-950/60 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-900">
+                10 Mesorregiões • 639 Municípios Mineiros
+              </span>
+              <button onclick="setMgModalTab('amanda')" class="text-xs font-bold text-hap-blue dark:text-sky-400 hover:underline">Ver 639 cidades &rarr;</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mt-3">
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Metropolitana de Belo Horizonte</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Zona da Mata (Juiz de Fora, Ubá, Muriaé)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Vale do Rio Doce (Gov. Valadares, Ipatinga)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Central Mineira (Curvelo, Bom Despacho)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Oeste de Minas (Divinópolis, Formiga, Itaúna)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Campo das Vertentes (Barbacena, Lavras, S.J. del Rei)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Noroeste de Minas (Unaí, Paracatu)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Norte de Minas (Montes Claros, Janaúba, Januária)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Jequitinhonha (Diamantina, Almenara)</span></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium"><i class="ph-fill ph-check-circle text-hap-blue"></i><span>Vale do Mucuri (Teófilo Otoni, Nanuque)</span></div>
+          </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-4 border-l-rose-600 rounded-xl p-4 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-600"></span>
+              <h4 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Murilo Adolfo Fernandes</h4>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-3 py-1 rounded-full border border-rose-200 dark:border-rose-900">
+                2 Mesorregiões • 214 Municípios Mineiros
+              </span>
+              <button onclick="setMgModalTab('murilo')" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">Ver 214 cidades &rarr;</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs mt-3">
+            <div class="p-3 bg-rose-50/60 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/50 text-slate-800 dark:text-slate-200">
+              <div class="flex items-center gap-2 font-bold text-rose-700 dark:text-rose-400 mb-1">
+                <i class="ph-fill ph-check-circle text-rose-600 text-base"></i>
+                <span>Triângulo Mineiro e Alto Paranaíba</span>
+              </div>
+              <p class="text-slate-600 dark:text-slate-300 text-[11px]">Uberlândia, Uberaba, Patos de Minas, Araguari, Araxá, Ituiutaba, Patrocínio, Frutal.</p>
+            </div>
+
+            <div class="p-3 bg-rose-50/60 dark:bg-rose-950/30 rounded-xl border border-rose-200 dark:border-rose-900/50 text-slate-800 dark:text-slate-200">
+              <div class="flex items-center gap-2 font-bold text-rose-700 dark:text-rose-400 mb-1">
+                <i class="ph-fill ph-check-circle text-rose-600 text-base"></i>
+                <span>Sul e Sudoeste de Minas</span>
+              </div>
+              <p class="text-slate-600 dark:text-slate-300 text-[11px]">Poços de Caldas, Pouso Alegre, Varginha, Passos, Itajubá, Alfenas, Três Corações, Extrema.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="mgTabListContent" class="hidden p-5 flex flex-col overflow-hidden bg-hap-bg dark:bg-slate-950">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div class="relative flex-1 min-w-[240px]">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-2.5 text-slate-400"></i>
+            <input type="text" id="mgModalCitySearch" oninput="filterMgModalCities(this.value)" placeholder="Pesquisar município mineiro..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-hap-blue">
+          </div>
+          <span id="mgModalCountBadge" class="text-xs text-hap-blue dark:text-sky-400 bg-blue-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-blue-200 dark:border-slate-700 font-mono font-bold">639 Municípios</span>
+        </div>
+
+        <div class="overflow-y-auto max-h-[52vh] pr-1">
+          <div id="mgModalGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-xs"></div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+        <span class="text-xs text-slate-500 dark:text-slate-400">Total Estado de Minas Gerais: <strong>853 municípios</strong> (100% IBGE)</span>
+        <button onclick="closeMgModal()" class="px-6 py-2 bg-hap-blue hover:bg-hap-blueDark text-white rounded-full text-xs font-bold transition shadow-xs">
+          Fechar Detalhamento
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: DIRETÓRIO NACIONAL DE MUNICÍPIOS -->
+  <div id="directoryModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in duration-200 text-slate-800 dark:text-slate-100">
+      
+      <div class="p-5 bg-hap-blue text-white flex items-center justify-between">
+        <div class="flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-xl bg-hap-orange text-white flex items-center justify-center text-xl font-black shadow-sm">
+            <i class="ph-bold ph-database"></i>
+          </div>
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-300 block">Auditoria & Consulta de Base • 27 UFs</span>
+            <h3 class="text-base sm:text-lg font-extrabold text-white">
+              Diretório Nacional de Municípios por Gerência Médica
+            </h3>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportDirectoryCsv()" class="px-3.5 py-2 rounded-xl bg-hap-orange hover:bg-hap-orangeHover text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+            <i class="ph-bold ph-download-simple"></i>
+            <span>Baixar CSV Corrigido</span>
+          </button>
+          <button onclick="closeDirectoryModal()" class="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition">
+            <i class="ph-bold ph-x text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-5 relative">
+          <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-2.5 text-slate-400"></i>
+          <input type="text" id="dirSearchInput" oninput="renderDirectoryTable()" placeholder="Buscar cidade, UF ou gestor..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:border-hap-blue">
+        </div>
+        <div class="sm:col-span-3">
+          <select id="dirUfSelect" onchange="renderDirectoryTable()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:border-hap-blue">
+            <option value="all">Todas as 27 UFs</option>
+          </select>
+        </div>
+        <div class="sm:col-span-4">
+          <select id="dirManagerSelect" onchange="renderDirectoryTable()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 font-semibold focus:outline-none focus:border-hap-blue">
+            <option value="all">Todos os Gestores / Status</option>
+            <option value="Amanda">Amanda Regina (N + NE + 10 Mesos MG)</option>
+            <option value="Diego">Diego Godoi (Sul + 6 RAs SP)</option>
+            <option value="Murilo">Murilo Adolfo (CO + 2 Mesos MG)</option>
+            <option value="João Henrique">João Henrique (RJ + ES + SP incl. RAs 14/16)</option>
+            <option value="Lorena & Marcela">Lorena & Marcela (39 RMSP)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-y-auto max-h-[58vh] bg-white dark:bg-slate-900">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10 text-[11px] uppercase text-slate-500 dark:text-slate-400 font-bold">
+            <tr>
+              <th class="py-3 px-4">Estado</th>
+              <th class="py-3 px-3">UF</th>
+              <th class="py-3 px-4">Município</th>
+              <th class="py-3 px-4">Recorte / Região</th>
+              <th class="py-3 px-4">Gerente Médico (Planilha)</th>
+            </tr>
+          </thead>
+          <tbody id="dirTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
+        </table>
+      </div>
+
+      <div class="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span id="dirResultCount" class="font-bold text-hap-blue dark:text-sky-400">Exibindo registros</span>
+        <button onclick="closeDirectoryModal()" class="px-6 py-2 bg-hap-blue hover:bg-hap-blueDark text-white rounded-full text-xs font-bold transition">
+          Fechar Base
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SCRIPT DE DADOS E MAPA LEAFLET -->
+  <script>
+    let isDarkMode = false;
+
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      const htmlEl = document.documentElement;
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+
+      if (isDarkMode) {
+        htmlEl.classList.add('dark');
+        if (themeIcon) { themeIcon.className = "ph-bold ph-sun text-base text-amber-300"; }
+        if (themeText) { themeText.innerText = "Tema Claro"; }
+      } else {
+        htmlEl.classList.remove('dark');
+        if (themeIcon) { themeIcon.className = "ph-bold ph-moon text-base"; }
+        if (themeText) { themeText.innerText = "Tema Escuro"; }
+      }
+    }
+
+    const rmspCitiesList = [
+      "Arujá","Barueri","Biritiba Mirim","Caieiras","Cajamar","Carapicuíba","Cotia","Diadema","Embu das Artes","Embu-Guaçu",
+      "Ferraz de Vasconcelos","Francisco Morato","Franco da Rocha","Guararema","Guarulhos","Itapecerica da Serra","Itapevi",
+      "Itaquaquecetuba","Jandira","Juquitiba","Mairiporã","Mauá","Mogi das Cruzes","Osasco","Pirapora do Bom Jesus","Poá",
+      "Ribeirão Pires","Rio Grande da Serra","Salesópolis","Santa Isabel","Santana de Parnaíba","Santo André","Suzano",
+      "São Bernardo do Campo","São Caetano do Sul","São Lourenço da Serra","São Paulo","Taboão da Serra","Vargem Grande Paulista"
+    ];
+
+    const spDiegoCitiesList = [
+      "Adamantina","Adolfo","Agudos","Alfredo Marcondes","Altair","Alto Alegre","Alvinlândia","Américo de Campos","Andradina","Anhumas",
+      "Aparecida d'Oeste","Araçatuba","Arco-Íris","Arealva","Ariranha","Aspásia","Assis","Auriflama","Avanhandava","Avaí",
+      "Bady Bassitt","Balbinos","Barbosa","Bariri","Barra Bonita","Barretos","Bastos","Bauru","Bebedouro","Bento de Abreu",
+      "Bernardino de Campos","Bilac","Birigui","Bocaina","Boracéia","Borebi","Borá","Braúna","Brejo Alegre","Buritama","Bálsamo",
+      "Cabrália Paulista","Cafelândia","Caiabu","Caiuá","Cajobi","Campos Novos Paulista","Canitar","Cardoso","Castilho","Catanduva",
+      "Catiguá","Cedral","Chavantes","Clementina","Colina","Colômbia","Coroados","Cosmorama","Cruzália","Cândido Mota",
+      "Dirce Reis","Dois Córregos","Dolcinópolis","Dracena","Duartina","Echaporã","Elisiário","Embaúba","Emilianópolis",
+      "Espírito Santo do Turvo","Estrela d'Oeste","Estrela do Norte","Euclides da Cunha Paulista","Fernandópolis","Fernão",
+      "Flora Rica","Floreal","Florínea","Flórida Paulista","Gabriel Monteiro","Garça","Gastão Vidigal","General Salgado",
+      "Getulina","Glicério","Guaimbê","Guaiçara","Guapiaçu","Guaraci","Guarani d'Oeste","Guarantã","Guararapes","Guaraçaí",
+      "Guaíra","Guzolândia","Gália","Herculândia","Iacanga","Iacri","Ibirarema","Ibirá","Icém","Iepê","Igaraçu do Tietê",
+      "Ilha Solteira","Indiana","Indiaporã","Inúbia Paulista","Ipaussu","Ipiguá","Irapuru","Irapuã","Itajobi","Itaju",
+      "Itapura","Itapuí","Jaborandi","Jaci","Jales","Jaú","José Bonifácio","João Ramalho","Junqueirópolis","Júlio Mesquita",
+      "Lavínia","Lençóis Paulista","Lins","Lourdes","Lucianópolis","Lucélia","Luiziânia","Lupércio","Lutécia","Macatuba",
+      "Macaubal","Macedônia","Magda","Marabá Paulista","Maracaí","Marapoama","Marinópolis","Mariápolis","Martinópolis","Marília",
+      "Mendonça","Meridiano","Mesópolis","Mineiros do Tietê","Mira Estrela","Mirandópolis","Mirante do Paranapanema","Mirassol",
+      "Mirassolândia","Monte Aprazível","Monte Azul Paulista","Monte Castelo","Monções","Murutinga do Sul","Nantes","Narandiba",
+      "Neves Paulista","Nhandeara","Nipoã","Nova Aliança","Nova Canaã Paulista","Nova Castilho","Nova Granada","Nova Guataporanga",
+      "Nova Independência","Nova Luzitânia","Novais","Novo Horizonte","Ocauçu","Olímpia","Onda Verde","Oriente","Orindiúva",
+      "Oscar Bressane","Osvaldo Cruz","Ourinhos","Ouro Verde","Ouroeste","Pacaembu","Palestina","Palmares Paulista","Palmeira d'Oeste",
+      "Palmital","Panorama","Paraguaçu Paulista","Paranapuã","Parapuã","Paraíso","Parisi","Paulicéia","Paulistânia","Paulo de Faria",
+      "Pederneiras","Pedranópolis","Pedrinhas Paulista","Penápolis","Pereira Barreto","Piacatu","Pindorama","Piquerobi","Pirajuí",
+      "Pirangi","Pirapozinho","Piratininga","Planalto","Platina","Poloni","Pompéu","Pongaí","Pontalinda","Pontes Gestal",
+      "Populina","Potirendaba","Pracinha","Presidente Alves","Presidente Bernardes","Presidente Epitácio","Presidente Prudente",
+      "Presidente Venceslau","Promissão","Quatá","Queiroz","Quintana","Rancharia","Regente Feijó","Reginópolis","Ribeirão do Sul",
+      "Ribeirão dos Índios","Rinópolis","Riolândia","Rosana","Rubinéia","Rubiácea","Sabino","Sagres","Sales","Salmourão",
+      "Salto Grande","Sandovalina","Santa Adélia","Santa Albertina","Santa Clara d'Oeste","Santa Cruz do Rio Pardo","Santa Fé do Sul",
+      "Santa Mercedes","Santa Rita d'Oeste","Santa Salete","Santana da Ponte Pensa","Santo Anastácio","Santo Antônio do Aracanguá",
+      "Santo Expedito","Santópolis do Aguapeí","Sebastianópolis do Sul","Severínia","Sud Mennucci","Suzanápolis","São Francisco",
+      "São José do Rio Preto","São João das Duas Pontes","São João de Iracema","São João do Pau d'Alho","São Pedro do Turvo",
+      "Tabapuã","Taciba","Taiaçu","Taiúva","Tanabi","Tarabai","Tarumã","Teodoro Sampaio","Terra Roxa","Timburi","Três Fronteiras",
+      "Tupi Paulista","Tupã","Turiúba","Turmalina","Ubarana","Ubirajara","Uchoa","União Paulista","Uru","Urupês","Urânia",
+      "Valentim Gentil","Valparaíso","Vera Cruz","Viradouro","Vista Alegre do Alto","Vitória Brasil","Votuporanga","Zacarias",
+      "Álvares Florence","Álvares Machado","Álvaro de Carvalho","Óleo"
+    ];
+
+    const spJoaoCitiesList = [
+      "Aguaí","Alambari","Altinópolis","Alumínio","Americana","Amparo","Américo Brasiliense","Analândia","Anhembi",
+      "Aparecida","Arapeí","Araraquara","Araras","Araçariguama","Araçoiaba da Serra","Areias","Areiópolis","Artur Nogueira",
+      "Atibaia","Avaré","Bananal","Barra do Turvo","Barrinha","Bertioga","Boa Esperança do Sul","Bofete","Boituva",
+      "Bom Jesus dos Perdões","Borborema","Botucatu","Bragança Paulista","Brodowski","Brotas","Cabreúva","Cachoeira Paulista",
+      "Caconde","Cajati","Cajuru","Campinas","Campo Limpo Paulista","Campos do Jordão","Cananéia","Canas","Capela do Alto",
+      "Capivari","Caraguatatuba","Casa Branca","Caçapava","Cerqueira César","Cerquilho","Cesário Lange","Charqueada","Conchal",
+      "Conchas","Cordeirópolis","Corumbataí","Cosmópolis","Cravinhos","Cruzeiro","Cubatão","Cunha","Cássia dos Coqueiros",
+      "Cândido Rodrigues","Descalvado","Divinolândia","Dobrada","Dourado","Dumont","Eldorado","Elias Fausto","Engenheiro Coelho",
+      "Espírito Santo do Pinhal","Estiva Gerbi","Fernando Prestes","Gavião Peixoto","Guaratinguetá","Guareí","Guariba","Guarujá",
+      "Guatapará","Holambra","Hortolândia","Iaras","Ibaté","Ibitinga","Ibiúna","Igaratá","Iguape","Ilha Comprida","Ilhabela",
+      "Indaiatuba","Iperó","Ipeúna","Iracemápolis","Itanhaém","Itapetininga","Itapira","Itariri","Itatiba","Itatinga","Itirapina",
+      "Itobi","Itu","Itupeva","Itápolis","Jaboticabal","Jacareí","Jacupiranga","Jaguariúna","Jambeiro","Jardinópolis","Jarinu",
+      "Joanópolis","Jumirim","Jundiaí","Juquiá","Lagoinha","Laranjal Paulista","Lavrinhas","Leme","Limeira","Lindóia","Lorena",
+      "Louveira","Luís Antônio","Mairinque","Manduri","Matão","Miracatu","Mococa","Mogi Guaçu","Mogi Mirim","Mombuca","Mongaguá",
+      "Monte Alegre do Sul","Monte Alto","Monte Mor","Monteiro Lobato","Morungaba","Motuca","Natividade da Serra","Nazaré Paulista",
+      "Nova Europa","Nova Odessa","Paraibuna","Pardinho","Pariquera-Açu","Paulínia","Pedra Bela","Pedreira","Pedro de Toledo",
+      "Pereiras","Peruíbe","Piedade","Pilar do Sul","Pindamonhangaba","Pinhalzinho","Piquete","Piracaia","Piracicaba","Pirassununga",
+      "Pitangueiras","Pontal","Porangaba","Porto Feliz","Porto Ferreira","Potim","Pradópolis","Praia Grande","Pratânia","Quadra",
+      "Queluz","Rafard","Redenção da Serra","Registro","Ribeirão Bonito","Ribeirão Preto","Rincão","Rio Claro","Rio das Pedras",
+      "Roseira","Saltinho","Salto","Salto de Pirapora","Santa Branca","Santa Bárbara d'Oeste","Santa Cruz da Conceição",
+      "Santa Cruz da Esperança","Santa Cruz das Palmeiras","Santa Ernestina","Santa Gertrudes","Santa Lúcia","Santa Maria da Serra",
+      "Santa Rita do Passa Quatro","Santa Rosa de Viterbo","Santo Antônio da Alegria","Santo Antônio de Posse","Santo Antônio do Jardim",
+      "Santo Antônio do Pinhal","Santos","Sarapuí","Serra Azul","Serra Negra","Serrana","Sertãozinho","Sete Barras","Silveiras",
+      "Socorro","Sorocaba","Sumaré","São Bento do Sapucaí","São Carlos","São José do Barreiro","São José do Rio Pardo",
+      "São José dos Campos","São João da Boa Vista","São Luiz do Paraitinga","São Manuel","São Miguel Arcanjo","São Pedro",
+      "São Roque","São Sebastião","São Sebastião da Grama","São Simão","São Vicente","Tabatinga","Tambaú","Tapiratiba",
+      "Tapiraí","Taquaral","Taquaritinga","Tatuí","Taubaté","Tietê","Torre de Pedra","Torrinha","Trabiju","Tremembé","Tuiuti",
+      "Ubatuba","Valinhos","Vargem","Vargem Grande do Sul","Vinhedo","Votorantim","Várzea Paulista","Águas da Prata","Águas de Lindóia",
+      "Águas de Santa Bárbara","Águas de São Pedro",
+      // RAs 14 e 16 alocadas para João Henrique
+      "Angatuba","Apiaí","Aramina","Arandu","Barra do Chapéu","Barão de Antonina","Batatais","Bom Sucesso de Itararé","Buri",
+      "Buritizal","Campina do Monte Alegre","Capão Bonito","Coronel Macedo","Cristais Paulista","Fartura","Franca","Guapiara",
+      "Guará","Igarapava","Iporanga","Ipuã","Itaberá","Itaoca","Itapeva","Itapirapuã Paulista","Itaporanga","Itararé","Itaí",
+      "Itirapuã","Ituverava","Jeriquara","Miguelópolis","Morro Agudo","Nova Campina","Nuporanga","Orlândia","Paranapanema",
+      "Patrocínio Paulista","Pedregulho","Piraju","Restinga","Ribeira","Ribeirão Branco","Ribeirão Corrente","Ribeirão Grande",
+      "Rifaina","Riversul","Sales Oliveira","Sarutaiá","São Joaquim da Barra","São José da Bela Vista","Taguaí","Taquarituba",
+      "Taquarivaí","Tejupá"
+    ];
+
+    const spRa14And16CitiesSet = new Set([
+      "Angatuba","Apiaí","Aramina","Arandu","Barra do Chapéu","Barão de Antonina","Batatais","Bom Sucesso de Itararé","Buri",
+      "Buritizal","Campina do Monte Alegre","Capão Bonito","Coronel Macedo","Cristais Paulista","Fartura","Franca","Guapiara",
+      "Guará","Igarapava","Iporanga","Ipuã","Itaberá","Itaoca","Itapeva","Itapirapuã Paulista","Itaporanga","Itararé","Itaí",
+      "Itirapuã","Ituverava","Jeriquara","Miguelópolis","Morro Agudo","Nova Campina","Nuporanga","Orlândia","Paranapanema",
+      "Patrocínio Paulista","Pedregulho","Piraju","Restinga","Ribeira","Ribeirão Branco","Ribeirão Corrente","Ribeirão Grande",
+      "Rifaina","Riversul","Sales Oliveira","Sarutaiá","São Joaquim da Barra","São José da Bela Vista","Taguaí","Taquarituba",
+      "Taquarivaí","Tejupá"
+    ]);
+
+    const mgAmandaCitiesList = [
+      "Abaeté","Abre Campo","Acaiaca","Aguanil","Aimorés","Alfredo Vasconcelos","Almenara","Alpercata","Alto Caparaó","Alto Jequitibá",
+      "Alto Rio Doce","Alvarenga","Alvinópolis","Alvorada de Minas","Além Paraíba","Amparo do Serra","Angelândia","Antônio Carlos",
+      "Antônio Dias","Antônio Prado de Minas","Aracitaba","Araponga","Araçaí","Araçuaí","Araújos","Arcos","Argirita","Aricanduva","Arinos",
+      "Astolfo Dutra","Ataléia","Augusto de Lima","Açucena","Baldim","Bambuí","Bandeira","Barbacena","Barra Longa","Barroso",
+      "Barão de Cocais","Barão do Monte Alto","Bela Vista de Minas","Belmiro Braga","Belo Horizonte","Belo Oriente","Belo Vale","Berilo",
+      "Berizal","Bertópolis","Betim","Bias Fortes","Bicas","Biquinhas","Bocaiúva","Bom Despacho","Bom Jesus do Amparo",
+      "Bom Jesus do Galho","Bom Sucesso","Bonfim","Bonfinópolis de Minas","Bonito de Minas","Botumirim","Brasilândia de Minas",
+      "Brasília de Minas","Braúnas","Brumadinho","Brás Pires","Buenópolis","Bugre","Buritis","Buritizeiro","Cabeceira Grande",
+      "Cachoeira da Prata","Cachoeira de Pajeú","Caetanópolis","Caeté","Caiana","Cajuri","Camacho","Campanário","Campo Azul","Campo Belo",
+      "Cana Verde","Canaã","Candeias","Cantagalo","Caparaó","Capela Nova","Capelinha","Capim Branco","Capitão Andrade","Capitão Enéas",
+      "Caputira","Caranaíba","Carandaí","Carangola","Caratinga","Caraí","Carbonita","Carlos Chagas","Carmo da Mata","Carmo do Cajuru",
+      "Carmésia","Carmópolis de Minas","Carrancas","Casa Grande","Cataguases","Catas Altas","Catas Altas da Noruega","Catuji","Catuti",
+      "Cedro do Abaeté","Central de Minas","Chalé","Chapada Gaúcha","Chapada do Norte","Chiador","Chácara","Cipotânea","Claro dos Poções",
+      "Cláudio","Coimbra","Coluna","Comercinho","Conceição da Barra de Minas","Conceição de Ipanema","Conceição do Mato Dentro",
+      "Conceição do Pará","Confins","Congonhas","Congonhas do Norte","Conselheiro Lafaiete","Conselheiro Pena","Contagem",
+      "Coração de Jesus","Cordisburgo","Corinto","Coroaci","Coronel Fabriciano","Coronel Murta","Coronel Pacheco","Coronel Xavier Chaves",
+      "Couto de Magalhães de Minas","Cristais","Cristiano Otoni","Cristália","Crisólita","Crucilândia","Cuparaque","Curral de Dentro",
+      "Curvelo","Córrego Danta","Córrego Fundo","Córrego Novo","Cônego Marinho","Datas","Descoberto","Desterro de Entre Rios",
+      "Desterro do Melo","Diamantina","Diogo de Vasconcelos","Dionísio","Divino","Divino das Laranjeiras","Divinolândia de Minas",
+      "Divinésia","Divinópolis","Divisa Alegre","Divisópolis","Dom Bosco","Dom Cavati","Dom Joaquim","Dom Silvério","Dona Euzébia",
+      "Dores de Campos","Dores de Guanhães","Dores do Indaiá","Dores do Turvo","Doresópolis","Durandé","Engenheiro Caldas",
+      "Engenheiro Navarro","Entre Folhas","Entre Rios de Minas","Ervália","Esmeraldas","Espera Feliz","Espinosa","Estrela Dalva",
+      "Estrela do Indaiá","Eugenópolis","Ewbank da Câmara","Faria Lemos","Felisburgo","Felixlândia","Felício dos Santos",
+      "Fernandes Tourinho","Ferros","Fervedouro","Florestal","Formiga","Formoso","Fortuna de Minas","Francisco Badaró","Francisco Dumont",
+      "Francisco Sá","Franciscópolis","Frei Gaspar","Frei Inocêncio","Frei Lagonegro","Fronteira dos Vales","Fruta de Leite","Funilândia",
+      "Galiléia","Gameleiras","Glaucilândia","Goiabeira","Goianá","Gonzaga","Gouveia","Governador Valadares","Grão Mogol","Guanhães",
+      "Guaraciaba","Guaraciama","Guarani","Guarará","Guarda-Mor","Guidoval","Guiricema","Iapu","Ibertioga","Ibiaí","Ibiracatu","Ibirité",
+      "Ibituruna","Icaraí de Minas","Igarapé","Igaratinga","Iguatama","Ijaci","Imbé de Minas","Indaiabira","Ingaí","Inhapim","Inhaúma",
+      "Inimutaba","Ipaba","Ipanema","Ipatinga","Itabira","Itabirinha","Itabirito","Itacambira","Itacarambi","Itaguara","Itaipé",
+      "Itamarandiba","Itamarati de Minas","Itambacuri","Itambé do Mato Dentro","Itanhomi","Itaobim","Itapecerica","Itatiaiuçu","Itaverava",
+      "Itaúna","Itinga","Itueta","Itumirim","Itutinga","Jaboticatubas","Jacinto","Jaguaraçu","Jampruca","Janaúba","Januária","Japaraíba",
+      "Japonvar","Jaíba","Jeceaba","Jenipapo de Minas","Jequeri","Jequitaí","Jequitibá","Jequitinhonha","Joanésia","Joaquim Felício",
+      "Joaíma","Jordânia","Josenópolis","José Gonçalves de Minas","José Raydan","João Monlevade","João Pinheiro","Juatuba","Juiz de Fora",
+      "Juramento","Juvenília","Ladainha","Lagamar","Lagoa Dourada","Lagoa Grande","Lagoa Santa","Lagoa da Prata","Lagoa dos Patos",
+      "Lajinha","Lamim","Laranjal","Lassance","Lavras","Leandro Ferreira","Leme do Prado","Leopoldina","Lima Duarte","Lontra","Luisburgo",
+      "Luislândia","Luminárias","Luz","Machacalis","Madre de Deus de Minas","Malacacheta","Mamonas","Manga","Manhuaçu","Manhumirim",
+      "Mantena","Mar de Espanha","Maravilhas","Mariana","Marilac","Maripá de Minas","Marliéria","Martinho Campos","Martins Soares",
+      "Mata Verde","Materlândia","Mateus Leme","Mathias Lobato","Matias Barbosa","Matias Cardoso","Matipó","Mato Verde","Matozinhos",
+      "Medeiros","Medina","Mendes Pimentel","Mercês","Mesquita","Minas Novas","Mirabela","Miradouro","Miravânia","Miraí","Moeda","Moema",
+      "Monjolos","Montalvânia","Monte Azul","Monte Formoso","Montes Claros","Montezuma","Morada Nova de Minas","Morro da Garça",
+      "Morro do Pilar","Muriaé","Mutum","Mário Campos","Nacip Raydan","Nanuque","Naque","Natalândia","Nazareno","Nepomuceno","Ninheira",
+      "Nova Belém","Nova Era","Nova Lima","Nova Módica","Nova Porteirinha","Nova Serrana","Nova União","Novo Cruzeiro",
+      "Novo Oriente de Minas","Novorizonte","Olaria","Olhos-d'Água","Oliveira","Oliveira Fortes","Onça de Pitangui","Oratórios","Orizânia",
+      "Ouro Branco","Ouro Preto","Ouro Verde de Minas","Padre Carvalho","Padre Paraíso","Pai Pedro","Paineiras","Pains","Paiva","Palma",
+      "Palmópolis","Papagaios","Paracatu","Paraopeba","Pará de Minas","Passa Tempo","Passabém","Patis","Patrocínio do Muriaé",
+      "Paula Cândido","Paulistas","Pavão","Pedra Azul","Pedra Bonita","Pedra Dourada","Pedra do Anta","Pedra do Indaiá",
+      "Pedras de Maria da Cruz","Pedro Leopoldo","Pedro Teixeira","Pequeri","Pequi","Perdigão","Perdões","Periquito","Pescador","Peçanha",
+      "Piau","Piedade de Caratinga","Piedade de Ponte Nova","Piedade do Rio Grande","Piedade dos Gerais","Pimenta","Pingo-d'Água",
+      "Pintópolis","Piracema","Piranga","Pirapetinga","Pirapora","Piraúba","Pitangui","Piumhi","Pocrane","Pompéu","Ponte Nova",
+      "Ponto Chique","Ponto dos Volantes","Porteirinha","Porto Firme","Poté","Prados","Presidente Bernardes","Presidente Juscelino",
+      "Presidente Kubitschek","Presidente Olegário","Prudente de Morais","Quartel Geral","Queluzito","Raposos","Raul Soares","Recreio",
+      "Reduto","Resende Costa","Resplendor","Ressaquinha","Riachinho","Riacho dos Machados","Ribeirão Vermelho","Ribeirão das Neves",
+      "Rio Acima","Rio Casca","Rio Doce","Rio Espera","Rio Manso","Rio Novo","Rio Pardo de Minas","Rio Piracicaba","Rio Pomba","Rio Preto",
+      "Rio Vermelho","Rio do Prado","Ritápolis","Rochedo de Minas","Rodeiro","Rosário da Limeira","Rubelita","Rubim","Sabará","Sabinópolis",
+      "Salinas","Salto da Divisa","Santa Bárbara","Santa Bárbara do Leste","Santa Bárbara do Monte Verde","Santa Bárbara do Tugúrio",
+      "Santa Cruz de Minas","Santa Cruz de Salinas","Santa Cruz do Escalvado","Santa Efigênia de Minas","Santa Fé de Minas",
+      "Santa Helena de Minas","Santa Luzia","Santa Margarida","Santa Maria de Itabira","Santa Maria do Salto","Santa Maria do Suaçuí",
+      "Santa Rita de Ibitipoca","Santa Rita de Jacutinga","Santa Rita de Minas","Santa Rita do Itueto","Santana de Cataguases",
+      "Santana de Pirapama","Santana do Deserto","Santana do Garambéu","Santana do Jacaré","Santana do Manhuaçu","Santana do Paraíso",
+      "Santana do Riacho","Santana dos Montes","Santo Antônio do Amparo","Santo Antônio do Aventureiro","Santo Antônio do Grama",
+      "Santo Antônio do Itambé","Santo Antônio do Jacinto","Santo Antônio do Monte","Santo Antônio do Retiro","Santo Antônio do Rio Abaixo",
+      "Santo Hipólito","Santos Dumont","Sardoá","Sarzedo","Sem-Peixe","Senador Cortes","Senador Firmino","Senador Modestino Gonçalves",
+      "Senhora de Oliveira","Senhora do Porto","Senhora dos Remédios","Sericita","Serra Azul de Minas","Serra da Saudade",
+      "Serra dos Aimorés","Serranópolis de Minas","Serro","Sete Lagoas","Setubinha","Silveirânia","Simonésia","Simão Pereira","Sobrália",
+      "São Brás do Suaçuí","São Domingos das Dores","São Domingos do Prata","São Francisco","São Francisco de Paula",
+      "São Francisco do Glória","São Félix de Minas","São Geraldo","São Geraldo da Piedade","São Geraldo do Baixio",
+      "São Gonçalo do Abaeté","São Gonçalo do Pará","São Gonçalo do Rio Abaixo","São Gonçalo do Rio Preto","São Joaquim de Bicas",
+      "São José da Lapa","São José da Safira","São José da Varginha","São José do Divino","São José do Goiabal","São José do Jacuri",
+      "São José do Mantimento","São João Evangelista","São João Nepomuceno","São João da Lagoa","São João da Ponte","São João das Missões",
+      "São João del Rei","São João do Manhuaçu","São João do Manteninha","São João do Oriente","São João do Pacuí","São João do Paraíso",
+      "São Miguel do Anta","São Pedro do Suaçuí","São Pedro dos Ferros","São Romão","São Roque de Minas","São Sebastião da Vargem Alegre",
+      "São Sebastião do Anta","São Sebastião do Maranhão","São Sebastião do Oeste","São Sebastião do Rio Preto","São Tiago","Tabuleiro",
+      "Taiobeiras","Taparuba","Tapiraí","Taquaraçu de Minas","Tarumirim","Teixeiras","Teófilo Otoni","Timóteo","Tiradentes","Tocantins",
+      "Tombos","Três Marias","Tumiritinga","Turmalina","Ubaporanga","Ubaí","Ubá","Umburatiba","Unaí","Uruana de Minas","Urucuia","Urucânia",
+      "Vargem Alegre","Vargem Bonita","Vargem Grande do Rio Pardo","Varjão de Minas","Varzelândia","Vazante","Verdelândia","Veredinha",
+      "Vermelho Novo","Vespasiano","Vieiras","Virgem da Lapa","Virginópolis","Virgolândia","Visconde do Rio Branco","Viçosa","Volta Grande",
+      "Várzea Palma","Água Boa","Águas Formosas","Águas Vermelhas"
+    ];
+
+    const mgMuriloCitiesList = [
+      "Abadia dos Dourados","Aiuruoca","Alagoa","Albertina","Alfenas","Alpinópolis","Alterosa","Andradas","Andrelândia","Araguari",
+      "Arantina","Araporã","Arapuá","Araxá","Arceburgo","Areado","Baependi","Bandeira do Sul","Boa Esperança","Bocaina de Minas",
+      "Bom Jardim de Minas","Bom Jesus da Penha","Bom Repouso","Borda da Mata","Botelhos","Brazópolis","Bueno Brandão","Cabo Verde",
+      "Cachoeira Dourada","Cachoeira de Minas","Caldas","Camanducaia","Cambuquira","Cambuí","Campanha","Campestre","Campina Verde",
+      "Campo Florido","Campo do Meio","Campos Altos","Campos Gerais","Canápolis","Capetinga","Capinópolis","Capitólio","Careaçu",
+      "Carmo da Cachoeira","Carmo de Minas","Carmo do Paranaíba","Carmo do Rio Claro","Carneirinho","Carvalhos","Carvalhópolis",
+      "Cascalho Rico","Caxambu","Centralina","Claraval","Comendador Gomes","Conceição da Aparecida","Conceição das Alagoas",
+      "Conceição das Pedras","Conceição do Rio Verde","Conceição dos Ouros","Congonhal","Conquista","Consolação","Coqueiral",
+      "Cordislândia","Coromandel","Cristina","Cruzeiro da Fortaleza","Cruzília","Cássia","Córrego do Bom Jesus","Delfim Moreira",
+      "Delfinópolis","Delta","Divisa Nova","Dom Viçoso","Douradoquara","Elói Mendes","Espírito Santo do Dourado","Estiva",
+      "Estrela do Sul","Extrema","Fama","Fortaleza de Minas","Fronteira","Frutal","Gonçalves","Grupiara","Guapé","Guaranésia","Guaxupé",
+      "Guimarânia","Gurinhatã","Heliodora","Ibiraci","Ibitiúra de Minas","Ibiá","Ilicínea","Inconfidentes","Indianópolis","Ipiaçu",
+      "Ipuiúna","Iraí de Minas","Itajubá","Itamogi","Itamonte","Itanhandu","Itapagipe","Itapeva","Itaú de Minas","Ituiutaba","Iturama",
+      "Jacutinga","Jacuí","Jesuânia","Juruaia","Lagoa Formosa","Lambari","Liberdade","Limeira do Oeste","Machado","Maria da Fé",
+      "Marmelópolis","Matutina","Minduri","Monsenhor Paulo","Monte Alegre de Minas","Monte Belo","Monte Carmelo","Monte Santo de Minas",
+      "Monte Sião","Munhoz","Muzambinho","Natércia","Nova Ponte","Nova Resende","Olímpio Noronha","Ouro Fino","Paraguaçu","Paraisópolis",
+      "Passa Quatro","Passa Vinte","Passos","Patos de Minas","Patrocínio","Pedralva","Pedrinópolis","Perdizes","Pirajuba","Piranguinho",
+      "Piranguçu","Planura","Pouso Alegre","Pouso Alto","Poço Fundo","Poços de Caldas","Prata","Pratinha","Pratápolis","Rio Paranaíba",
+      "Romaria","Sacramento","Santa Juliana","Santa Rita de Caldas","Santa Rita do Sapucaí","Santa Rosa da Serra","Santa Vitória",
+      "Santana da Vargem","Sapucaí-Mirim","Senador Amaral","Senador José Bento","Seritinga","Serra do Salitre","Serrania","Serranos",
+      "Silvianópolis","Soledade de Minas","São Bento Abade","São Francisco de Sales","São Gonçalo do Sapucaí","São Gotardo",
+      "São José da Barra","São José do Alegre","São João Batista do Glória","São João da Mata","São Lourenço","São Pedro da União",
+      "São Sebastião da Bela Vista","São Sebastião do Paraíso","São Sebastião do Rio Verde","São Tomás de Aquino","São Tomé das Letras",
+      "São Vicente de Minas","Tapira","Tiros","Tocos do Moji","Toledo","Três Corações","Três Pontas","Tupaciguara","Turvolândia",
+      "Uberaba","Uberlândia","União de Minas","Varginha","Veríssimo","Virgínia","Wenceslau Braz","Água Comprida"
+    ];
+
+    const otherStatesSamples = {
+      "PR": { count: 399, manager: "Diego", cities: ["Abatiá","Adrianópolis","Agudos do Sul","Almirante Tamandaré","Altamira do Paraná","Alto Paraná","Alto Paraíso","Alto Piquiri","Altônia","Alvorada do Sul","Amaporã","Ampére","Anahy","Andirá","Antonina","Antônio Olinto","Apucarana","Arapongas","Arapoti","Arapuã","Araruna","Araucária","Ariranha do Ivaí","Assaí","Assis Chateaubriand","Astorga","Atalaia","Balsa Nova","Bandeirantes","Barbosa Ferraz","Barra do Jacaré","Barracão","Bela Vista da Caroba","Bela Vista do Paraíso","Bituruna","Boa Esperança","Boa Esperança do Iguaçu","Boa Ventura de São Roque","Boa Vista da Aparecida","Bocaiúva do Sul","Bom Jesus do Sul","Bom Sucesso","Bom Sucesso do Sul","Borrazópolis","Braganey","Brasilândia do Sul","Cafeara","Cafelândia","Cafezal do Sul","Califórnia","Cambará","Cambira","Cambé","Campina Grande do Sul","Campina da Lagoa","Campina do Simão","Campo Bonito","Campo Largo","Campo Magro","Campo Mourão","Campo do Tenente","Candói","Cantagalo","Capanema","Capitão Leônidas Marques","Carambeí","Carlópolis","Cascavel","Castro","Catanduvas","Centenário do Sul","Cerro Azul","Chopinzinho","Cianorte","Cidade Gaúcha","Clevelândia","Colombo","Colorado","Congonhinhas","Conselheiro Mairinck","Contenda","Corbélia","Cornélio Procópio","Coronel Domingos Soares","Coronel Vivida","Corumbataí do Sul","Cruz Machado","Cruzeiro do Iguaçu","Cruzeiro do Oeste","Cruzeiro do Sul","Cruzmaltina","Curitiba","Curiúva","Cândido de Abreu","Céu Azul","Diamante D'Oeste","Diamante do Norte","Diamante do Sul","Dois Vizinhos","Douradina","Doutor Camargo","Doutor Ulysses","Engenheiro Beltrão","Entre Rios do Oeste","Enéas Marques","Esperança Nova","Espigão Alto do Iguaçu","Farol","Faxinal","Fazenda Rio Grande","Fernandes Pinheiro","Figueira","Flor da Serra do Sul","Floraí","Floresta","Florestópolis","Flórida","Formosa do Oeste","Foz do Iguaçu","Foz do Jordão","Francisco Alves","Francisco Beltrão","Fênix","General Carneiro","Godoy Moreira","Goioerê","Goioxim","Grandes Rios","Guairaçá","Guamiranga","Guapirama","Guaporema","Guaraci","Guaraniaçu","Guarapuava","Guaraqueçaba","Guaratuba","Guaíra","Honório Serpa","Ibaiti","Ibema","Ibiporã","Icaraíma","Iguaraçu","Iguatu","Imbaú","Imbituva","Inajá","Indianópolis","Inácio Martins","Ipiranga","Iporã","Iracema do Oeste","Irati","Iretama","Itaguajé","Itaipulândia","Itambaracá","Itambé","Itapejara d'Oeste","Itaperuçu","Itaúna do Sul","Ivaiporã","Ivatuba","Ivaté","Ivaí","Jaboti","Jacarezinho","Jaguapitã","Jaguariaíva","Jandaia do Sul","Janiópolis","Japira","Japurá","Jardim Alegre","Jardim Olinda","Jataizinho","Jesuítas","Joaquim Távora","Jundiaí do Sul","Juranda","Jussara","Kaloré","Lapa","Laranjal","Laranjeiras do Sul","Leópolis","Lidianópolis","Lindoeste","Loanda","Lobato","Londrina","Luiziana","Lunardelli","Lupionópolis","Mallet","Mamborê","Mandaguari","Mandaguaçu","Mandirituba","Manfrinópolis","Mangueirinha","Manoel Ribas","Marechal Cândido Rondon","Maria Helena","Marialva","Marilena","Mariluz","Marilândia do Sul","Maringá","Maripá","Mariópolis","Marmeleiro","Marquinho","Marumbi","Matelândia","Matinhos","Mato Rico","Mauá da Serra","Medianeira","Mercedes","Mirador","Miraselva","Missal","Moreira Sales","Morretes","Munhoz de Melo","Nossa Senhora das Graças","Nova Aliança do Ivaí","Nova América da Colina","Nova Aurora","Nova Cantu","Nova Esperança","Nova Esperança do Sudoeste","Nova Fátima","Nova Laranjeiras","Nova Londrina","Nova Olímpia","Nova Prata do Iguaçu","Nova Santa Bárbara","Nova Santa Rosa","Nova Tebas","Novo Itacolomi","Ortigueira","Ourizona","Ouro Verde do Oeste","Paiçandu","Palmas","Palmeira","Palmital","Palotina","Paranacity","Paranaguá","Paranapoema","Paranavaí","Paraíso do Norte","Pato Bragado","Pato Branco","Paula Freitas","Paulo Frontin","Peabiru","Perobal","Pinhais","Pinhal de São Bento","Pinhalão","Pinhão","Piraquara","Piraí do Sul","Pitanga","Pitangueiras","Piên","Planaltina do Paraná","Planalto","Ponta Grossa","Pontal do Paraná","Porecatu","Porto Amazonas","Porto Barreiro","Porto Rico","Porto Vitória","Prado Ferreira","Pranchita","Presidente Castelo Branco","Primeiro de Maio","Prudentópolis","Pérola","Pérola d'Oeste","Quarto Centenário","Quatiguá","Quatro Barras","Quatro Pontes","Quedas do Iguaçu","Querência do Norte","Quinta do Sol","Quitandinha","Ramilândia","Rancho Alegre","Rancho Alegre D'Oeste","Realeza","Rebouças","Renascença","Reserva","Reserva do Iguaçu","Ribeirão Claro","Ribeirão do Pinhal","Rio Azul","Rio Bom","Rio Bonito do Iguaçu","Rio Branco do Ivaí","Rio Branco do Sul","Rio Negro","Rolândia","Roncador","Rondon","Rosário do Ivaí","Sabáudia","Salgado Filho","Salto do Itararé","Salto do Lontra","Santa Amélia","Santa Cecília do Pavão","Santa Cruz de Monte Castelo","Santa Fé","Santa Helena","Santa Inês","Santa Isabel do Ivaí","Santa Izabel do Oeste","Santa Lúcia","Santa Maria do Oeste","Santa Mariana","Santa Mônica","Santa Tereza do Oeste","Santa Terezinha de Itaipu","Santana do Itararé","Santo Antônio da Platina","Santo Antônio do Caiuá","Santo Antônio do Paraíso","Santo Antônio do Sudoeste","Santo Inácio","Sapopema","Sarandi","Saudade do Iguaçu","Sengés","Serranópolis do Iguaçu","Sertaneja","Sertanópolis","Siqueira Campos","Sulina","São Carlos do Ivaí","São Jerônimo da Serra","São Jorge d'Oeste","São Jorge do Ivaí","São Jorge do Patrocínio","São José da Boa Vista","São José das Palmeiras","São José dos Pinhais","São João","São João do Caiuá","São João do Ivaí","São João do Triunfo","São Manoel do Paraná","São Mateus do Sul","São Miguel do Iguaçu","São Pedro do Iguaçu","São Pedro do Ivaí","São Pedro do Paraná","São Sebastião da Amoreira","São Tomé","Tamarana","Tamboara","Tapejara","Tapira","Teixeira Soares","Telêmaco Borba","Terra Boa","Terra Rica","Terra Roxa","Tibagi","Tijucas do Sul","Toledo","Tomazina","Três Barras do Paraná","Tunas do Paraná","Tuneiras do Oeste","Tupãssi","Turvo","Ubiratã","Umuarama","Uniflor","União da Vitória","Uraí","Ventania","Vera Cruz do Oeste","Verê","Virmond","Vitorino","Wenceslau Braz","Xambrê","Ângulo"] },
+      "RS": { count: 497, manager: "Diego", cities: ["Aceguá","Agudo","Ajuricaba","Alecrim","Alegrete","Alegria","Almirante Tamandaré do Sul","Alpestre","Alto Alegre","Alto Feliz","Alvorada","Amaral Ferrador","Ametista do Sul","André da Rocha","Anta Gorda","Antônio Prado","Arambaré","Araricá","Aratiba","Arroio Grande","Arroio do Meio","Arroio do Padre","Arroio do Sal","Arroio do Tigre","Arroio dos Ratos","Arvorezinha","Augusto Pestana","Bagé","Balneário Pinhal","Barra Funda","Barra do Guarita","Barra do Quaraí","Barra do Ribeiro","Barra do Rio Azul","Barracão","Barros Cassal","Barão","Barão de Cotegipe","Barão do Triunfo","Benjamin Constant do Sul","Bento Gonçalves","Boa Vista das Missões","Boa Vista do Buricá","Boa Vista do Cadeado","Boa Vista do Incra","Boa Vista do Sul","Bom Jesus","Bom Princípio","Bom Progresso","Bom Retiro do Sul","Boqueirão do Leão","Bossoroca","Bozano","Braga","Brochier","Butiá","Cacequi","Cachoeira do Sul","Cachoeirinha","Cacique Doble","Caibaté","Caiçara","Camaquã","Camargo","Cambará do Sul","Campestre da Serra","Campina das Missões","Campinas do Sul","Campo Bom","Campo Novo","Campos Borges","Candelária","Candiota","Canela","Canguçu","Canoas","Canudos do Vale","Capela de Santana","Capitão","Capivari do Sul","Capão Bonito do Sul","Capão da Canoa","Capão do Cipó","Capão do Leão","Carazinho","Caraá","Carlos Barbosa","Carlos Gomes","Casca","Caseiros","Catuípe","Caxias do Sul","Caçapava do Sul","Centenário","Cerrito","Cerro Branco","Cerro Grande","Cerro Grande do Sul","Cerro Largo","Chapada","Charqueadas","Charrua","Chiapetta","Chuvisca","Chuí","Cidreira","Ciríaco","Colinas","Colorado","Condor","Constantina","Coqueiro Baixo","Coqueiros do Sul","Coronel Barros","Coronel Bicaco","Coronel Pilar","Cotiporã","Coxilha","Crissiumal","Cristal","Cristal do Sul","Cruz Alta","Cruzaltense","Cruzeiro do Sul","Cândido Godói","David Canabarro","Derrubadas","Dezesseis de Novembro","Dilermando de Aguiar","Dois Irmãos","Dois Irmãos das Missões","Dois Lajeados","Dom Feliciano","Dom Pedrito","Dom Pedro de Alcântara","Dona Francisca","Doutor Maurício Cardoso","Doutor Ricardo","Eldorado do Sul","Encantado","Encruzilhada do Sul","Engenho Velho","Entre Rios do Sul","Entre-Ijuís","Erebango","Erechim","Ernestina","Erval Grande","Erval Seco","Esmeralda","Esperança do Sul","Espumoso","Estação","Esteio","Estreito","Estrela","Estrela Velha","Estância Velha","Eugênio de Castro","Fagundes Varela","Farroupilha","Faxinal do Soturno","Faxinalzinho","Fazenda Vilanova","Feliz","Flores da Cunha","Floriano Peixoto","Fontoura Xavier","Formigueiro","Forquetinha","Fortaleza dos Valos","Frederico Westphalen","Garibaldi","Garruchos","Gaurama","General Câmara","Gentil","Getúlio Vargas","Giruá","Glorinha","Gramado","Gramado Xavier","Gramado dos Loureiros","Gravataí","Guabiju","Guaporé","Guarani das Missões","Guaíba","Harmonia","Herval","Herveiras","Horizontina","Hulha Negra","Humaitá","Ibarama","Ibiaçá","Ibiraiaras","Ibirapuitã","Ibirubá","Igrejinha","Ijuí","Ilópolis","Imbé","Imigrante","Independência","Inhacorá","Ipiranga do Sul","Ipê","Iraí","Itaara","Itacurubi","Itapuca","Itaqui","Itati","Itatiba do Sul","Ivorá","Ivoti","Jaboticaba","Jacuizinho","Jacutinga","Jaguari","Jaguarão","Jaquirana","Jari","Jóia","Júlio de Castilhos","Lagoa Bonita do Sul","Lagoa Vermelha","Lagoa dos Três Cantos","Lagoão","Lajeado","Lajeado do Bugre","Lavras do Sul","Liberato Salzano","Lindolfo Collor","Linha Nova","Machadinho","Mampituba","Manoel Viana","Maquiné","Maratá","Marau","Marcelino Ramos","Mariana Pimentel","Mariano Moro","Marques de Souza","Mata","Mato Castelhano","Mato Leitão","Mato Queimado","Maximiliano de Almeida","Maçambará","Minas do Leão","Miraguaí","Montauri","Monte Alegre dos Campos","Monte Belo do Sul","Montenegro","Mormaço","Morrinhos do Sul","Morro Redondo","Morro Reuter","Mostardas","Muitos Capões","Muliterno","Muçum","Nicolau Vergueiro","Nonoai","Nova Alvorada","Nova Araçá","Nova Bassano","Nova Boa Vista","Nova Bréscia","Nova Candelária","Nova Esperança do Sul","Nova Hartz","Nova Palma","Nova Petrópolis","Nova Prata","Nova Pádua","Nova Ramada","Nova Roma do Sul","Nova Santa Rita","Novo Barreiro","Novo Cabrais","Novo Hamburgo","Novo Machado","Novo Tiradentes","Novo Xingu","Não-Me-Toque","Osório","Paim Filho","Palmares do Sul","Palmeira das Missões","Palmitinho","Panambi","Pantano Grande","Paraí","Paraíso do Sul","Pareci Novo","Parobé","Passa Sete","Passo Fundo","Passo do Sobrado","Paulo Bento","Paverama","Pedras Altas","Pedro Osório","Pejuçara","Pelotas","Picada Café","Pinhal","Pinhal Grande","Pinhal da Serra","Pinheirinho do Vale","Pinheiro Machado","Pinto Bandeira","Pirapó","Piratini","Planalto","Ponte Preta","Pontão","Porto Alegre","Porto Lucena","Porto Mauá","Porto Vera Cruz","Porto Xavier","Portão","Pouso Novo","Poço das Antas","Presidente Lucena","Progresso","Protásio Alves","Putinga","Quaraí","Quatro Irmãos","Quevedos","Quinze de Novembro","Redentora","Relvado","Restinga Sêca","Rio Grande","Rio Pardo","Rio dos Índios","Riozinho","Roca Sales","Rodeio Bonito","Rolador","Rolante","Ronda Alta","Rondinha","Roque Gonzales","Rosário do Sul","Sagrada Família","Saldanha Marinho","Salto do Jacuí","Salvador das Missões","Salvador do Sul","Sananduva","Sant'Ana do Livramento","Santa Bárbara do Sul","Santa Cecília do Sul","Santa Clara do Sul","Santa Cruz do Sul","Santa Margarida do Sul","Santa Maria","Santa Maria do Herval","Santa Rosa","Santa Tereza","Santa Vitória do Palmar","Santana da Boa Vista","Santiago","Santo Antônio da Patrulha","Santo Antônio das Missões","Santo Antônio do Palma","Santo Antônio do Planalto","Santo Augusto","Santo Cristo","Santo Expedito do Sul","Santo Ângelo","Sapiranga","Sapucaia do Sul","Sarandi","Seberi","Sede Nova","Segredo","Selbach","Senador Salgado Filho","Sentinela do Sul","Serafina Corrêa","Sertão","Sertão Santana","Sete de Setembro","Severiano de Almeida","Silveira Martins","Sinimbu","Sobradinho","Soledade","São Borja","São Domingos do Sul","São Francisco de Assis","São Francisco de Paula","São Gabriel","São Jerônimo","São Jorge","São José das Missões","São José do Herval","São José do Hortêncio","São José do Inhacorá","São José do Norte","São José do Ouro","São José do Sul","São José dos Ausentes","São João da Urtiga","São João do Polêsine","São Leopoldo","São Lourenço do Sul","São Luiz Gonzaga","São Marcos","São Martinho","São Martinho da Serra","São Miguel das Missões","São Nicolau","São Paulo das Missões","São Pedro da Serra","São Pedro das Missões","São Pedro do Butiá","São Pedro do Sul","São Sebastião do Caí","São Sepé","São Valentim","São Valentim do Sul","São Valério do Sul","São Vendelino","São Vicente do Sul","Sério","Tabaí","Tapejara","Tapera","Tapes","Taquara","Taquari","Taquaruçu do Sul","Tavares","Tenente Portela","Terra de Areia","Teutônia","Tio Hugo","Tiradentes do Sul","Toropi","Torres","Tramandaí","Travesseiro","Trindade do Sul","Triunfo","Três Arroios","Três Cachoeiras","Três Coroas","Três Forquilhas","Três Palmeiras","Três Passos","Três de Maio","Tucunduva","Tunas","Tupanci do Sul","Tupanciretã","Tupandi","Tuparendi","Turuçu","Ubiretama","Unistalda","União da Serra","Uruguaiana","Vacaria","Vale Real","Vale Verde","Vale do Sol","Vanini","Venâncio Aires","Vera Cruz","Veranópolis","Vespasiano Corrêa","Viadutos","Viamão","Vicente Dutra","Victor Graeff","Vila Flores","Vila Lângaro","Vila Maria","Vila Nova do Sul","Vista Alegre","Vista Alegre do Prata","Vista Gaúcha","Vitória das Missões","Westfália","Xangri-lá","Água Santa","Áurea"] },
+      "SC": { count: 295, manager: "Diego", cities: ["Abdon Batista","Abelardo Luz","Agrolândia","Agronômica","Alfredo Wagner","Alto Bela Vista","Anchieta","Angelina","Anita Garibaldi","Anitápolis","Antônio Carlos","Apiúna","Arabutã","Araquari","Araranguá","Armazém","Arroio Trinta","Arvoredo","Ascurra","Atalanta","Aurora","Balneário Arroio do Silva","Balneário Barra do Sul","Balneário Camboriú","Balneário Gaivota","Balneário Piçarras","Balneário Rincão","Bandeirante","Barra Bonita","Barra Velha","Bela Vista do Toldo","Belmonte","Benedito Novo","Biguaçu","Blumenau","Bocaina do Sul","Bom Jardim da Serra","Bom Jesus","Bom Jesus do Oeste","Bom Retiro","Bombinhas","Botuverá","Braço do Norte","Braço do Trombudo","Brunópolis","Brusque","Caibi","Calmon","Camboriú","Campo Alegre","Campo Belo do Sul","Campo Erê","Campos Novos","Canelinha","Canoinhas","Capinzal","Capivari de Baixo","Capão Alto","Catanduvas","Caxambu do Sul","Caçador","Celso Ramos","Cerro Negro","Chapadão do Lageado","Chapecó","Cocal do Sul","Concórdia","Cordilheira Alta","Coronel Freitas","Coronel Martins","Correia Pinto","Corupá","Criciúma","Cunha Porã","Cunhataí","Curitibanos","Descanso","Dionísio Cerqueira","Dona Emma","Doutor Pedrinho","Entre Rios","Ermo","Erval Velho","Faxinal dos Guedes","Flor do Sertão","Florianópolis","Formosa do Sul","Forquilhinha","Fraiburgo","Frei Rogério","Galvão","Garopaba","Garuva","Gaspar","Governador Celso Ramos","Gravatal","Grão-Pará","Guabiruba","Guaraciaba","Guaramirim","Guarujá do Sul","Guatambú","Herval d'Oeste","Ibiam","Ibicaré","Ibirama","Ilhota","Imaruí","Imbituba","Imbuia","Indaial","Iomerê","Ipira","Iporã do Oeste","Ipuaçu","Ipumirim","Iraceminha","Irani","Irati","Irineópolis","Itaiópolis","Itajaí","Itapema","Itapiranga","Itapoá","Ituporanga","Itá","Içara","Jaborá","Jacinto Machado","Jaguaruna","Jaraguá do Sul","Jardinópolis","Joaçaba","Joinville","José Boiteux","Jupiá","Lacerdópolis","Lages","Laguna","Lajeado Grande","Laurentino","Lauro Müller","Lebon Régis","Leoberto Leal","Lindóia do Sul","Lontras","Luiz Alves","Luzerna","Macieira","Mafra","Major Gercino","Major Vieira","Maracajá","Maravilha","Marema","Massaranduba","Matos Costa","Meleiro","Mirim Doce","Modelo","Mondaí","Monte Carlo","Monte Castelo","Morro Grande","Morro da Fumaça","Navegantes","Nova Erechim","Nova Itaberaba","Nova Trento","Nova Veneza","Novo Horizonte","Orleans","Otacílio Costa","Ouro","Ouro Verde","Paial","Painel","Palhoça","Palma Sola","Palmeira","Palmitos","Papanduva","Paraíso","Passo de Torres","Passos Maia","Paulo Lopes","Pedras Grandes","Penha","Peritiba","Pescaria Brava","Petrolândia","Pinhalzinho","Pinheiro Preto","Piratuba","Planalto Alegre","Pomerode","Ponte Alta","Ponte Alta do Norte","Ponte Serrada","Porto Belo","Porto União","Pouso Redondo","Praia Grande","Presidente Castello Branco","Presidente Getúlio","Presidente Nereu","Princesa","Quilombo","Rancho Queimado","Rio Fortuna","Rio Negrinho","Rio Rufino","Rio das Antas","Rio do Campo","Rio do Oeste","Rio do Sul","Rio dos Cedros","Riqueza","Rodeio","Romelândia","Salete","Saltinho","Salto Veloso","Sangão","Santa Cecília","Santa Helena","Santa Rosa de Lima","Santa Rosa do Sul","Santa Terezinha","Santa Terezinha do Progresso","Santiago do Sul","Santo Amaro da Imperatriz","Saudades","Schroeder","Seara","Serra Alta","Siderópolis","Sombrio","Sul Brasil","São Bento do Sul","São Bernardino","São Bonifácio","São Carlos","São Cristóvão do Sul","São Domingos","São Francisco do Sul","São Joaquim","São José","São José do Cedro","São José do Cerrito","São João Batista","São João do Itaperiú","São João do Oeste","São João do Sul","São Lourenço do Oeste","São Ludgero","São Martinho","São Miguel da Boa Vista","São Miguel do Oeste","São Pedro de Alcântara","Taió","Tangará","Tigrinhos","Tijucas","Timbé do Sul","Timbó","Timbó Grande","Treviso","Treze Tílias","Treze de Maio","Trombudo Central","Três Barras","Tubarão","Tunápolis","Turvo","União do Oeste","Urubici","Urupema","Urussanga","Vargem","Vargem Bonita","Vargeão","Vidal Ramos","Videira","Vitor Meireles","Witmarsum","Xanxerê","Xavantina","Xaxim","Zortéa","Água Doce","Águas Frias","Águas Mornas","Águas de Chapecó"] }
+    };
+
+    let map = null;
+    let geoJsonLayer = null;
+    let labelMarkers = [];
+    let currentFilter = 'all';
+    let selectedUf = null;
+    let allMunicipalitiesIndex = [];
+    let currentSpTab = 'managers';
+    let currentMgTab = 'summary';
+
+    function buildMunicipalitiesIndex() {
+      allMunicipalitiesIndex = [];
+      spDiegoCitiesList.forEach(c => allMunicipalitiesIndex.push({ state: "São Paulo", uf: "SP", city: c, region: "RAs 7 a 11 e 13 (Interior Oeste)", manager: "Diego" }));
+      spJoaoCitiesList.forEach(c => {
+        const regLabel = spRa14And16CitiesSet.has(c)
+          ? "RAs 14 (Franca) e 16 (Itapeva) — João Henrique"
+          : "RAs 2 a 6 e 12 (Litoral/Vale/Campinas/RP)";
+        allMunicipalitiesIndex.push({ state: "São Paulo", uf: "SP", city: c, region: regLabel, manager: "João Henrique" });
+      });
+      rmspCitiesList.forEach(c => allMunicipalitiesIndex.push({ state: "São Paulo", uf: "SP", city: c, region: "1ª RA Grande São Paulo (RMSP)", manager: "A definir entre Lorena & Marcela" }));
+
+      mgAmandaCitiesList.forEach(c => allMunicipalitiesIndex.push({ state: "Minas Gerais", uf: "MG", city: c, region: "10 Mesorregiões MG (BH/Norte/Zona da Mata)", manager: "Amanda" }));
+      mgMuriloCitiesList.forEach(c => allMunicipalitiesIndex.push({ state: "Minas Gerais", uf: "MG", city: c, region: "2 Mesorregiões MG (Sul/Sudoeste & Triângulo)", manager: "Murilo" }));
+
+      Object.keys(otherStatesSamples).forEach(uf => {
+        const info = otherStatesSamples[uf];
+        const stName = statesMeta[uf]?.name || uf;
+        const macro = statesMeta[uf]?.macro || "";
+        info.cities.forEach(c => {
+          allMunicipalitiesIndex.push({ state: stName, uf: uf, city: c, region: `${macro} (${info.count} mun. na UF)`, manager: info.manager });
+        });
+      });
+
+      const ufSelect = document.getElementById('dirUfSelect');
+      if (ufSelect) {
+        Object.keys(statesMeta).sort().forEach(uf => {
+          const opt = document.createElement('option');
+          opt.value = uf;
+          opt.textContent = `${uf} - ${statesMeta[uf].name} (${statesMeta[uf].citiesCount} mun.)`;
+          ufSelect.appendChild(opt);
+        });
+      }
+    }
+
+    function initLeafletMap() {
+      if (map) return;
+      map = L.map('map', {
+        center: [-14.235, -51.925],
+        zoom: 4,
+        minZoom: 3.5,
+        maxZoom: 9,
+        zoomControl: true,
+        attributionControl: false
+      });
+
+      loadBrazilGeoJson();
+    }
+
+    async function loadBrazilGeoJson() {
+      const loader = document.getElementById('mapLoader');
+      
+      const sources = [
+        'https://raw.githubusercontent.com/codeforamerica/click_to_call/master/orig_data/brazil_geo.json',
+        'https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/geojson/uf.json',
+        'https://raw.githubusercontent.com/luizpedone/multipolygon-margins/master/dist/brazil-states.geojson'
+      ];
+
+      let geoData = null;
+
+      for (let url of sources) {
+        try {
+          const resp = await fetch(url);
+          if (resp.ok) {
+            geoData = await resp.json();
+            if (geoData && geoData.features && geoData.features.length >= 26) {
+              break;
+            }
+          }
+        } catch (e) {
+          console.warn('Tentando próximo CDN para GeoJSON...', e);
+        }
+      }
+
+      if (!geoData) {
+        geoData = generateReliableFallbackGeoJson();
+      }
+
+      renderGeoJsonLayer(geoData);
+
+      if (loader) {
+        loader.classList.add('opacity-0');
+        setTimeout(() => loader.style.display = 'none', 300);
+      }
+    }
+
+    function extractUfCode(feature) {
+      const p = feature.properties || {};
+      if (p.sigla && p.sigla.length === 2) return p.sigla.toUpperCase();
+      if (p.UF && p.UF.length === 2) return p.UF.toUpperCase();
+      if (p.UF_05 && p.UF_05.length === 2) return p.UF_05.toUpperCase();
+      if (p.id && p.id.length === 2) return p.id.toUpperCase();
+      if (p.name && p.name.length === 2) return p.name.toUpperCase();
+      if (p.ESTADO && p.ESTADO.length === 2) return p.ESTADO.toUpperCase();
+      if (feature.id && String(feature.id).length === 2) return String(feature.id).toUpperCase();
+      
+      const nome = (p.nome || p.name || p.NOME || '').toLowerCase();
+      const nameMap = {
+        'acre': 'AC', 'alagoas': 'AL', 'amapá': 'AP', 'amapa': 'AP', 'amazonas': 'AM',
+        'bahia': 'BA', 'ceará': 'CE', 'ceara': 'CE', 'distrito federal': 'DF', 'espírito santo': 'ES',
+        'espirito santo': 'ES', 'goiás': 'GO', 'goias': 'GO', 'maranhão': 'MA', 'maranhao': 'MA',
+        'mato grosso': 'MT', 'mato grosso do sul': 'MS', 'minas gerais': 'MG', 'pará': 'PA',
+        'para': 'PA', 'paraíba': 'PB', 'paraiba': 'PB', 'paraná': 'PR', 'parana': 'PR',
+        'pernambuco': 'PE', 'piauí': 'PI', 'piaui': 'PI', 'rio de janeiro': 'RJ',
+        'rio grande do norte': 'RN', 'rio grande do sul': 'RS', 'rondônia': 'RO', 'rondonia': 'RO',
+        'roraima': 'RR', 'santa catarina': 'SC', 'são paulo': 'SP', 'sao paulo': 'SP',
+        'sergipe': 'SE', 'tocantins': 'TO'
+      };
+      return nameMap[nome] || null;
+    }
+
+    function getFeatureStyle(feature) {
+      const uf = extractUfCode(feature);
+      const meta = statesMeta[uf];
+
+      if (!meta) {
+        return {
+          fillColor: '#CBD5E1',
+          weight: 1.5,
+          opacity: 1,
+          color: '#ffffff',
+          fillOpacity: 0.7
+        };
+      }
+
+      let fillColor = meta.color;
+      let fillOpacity = 0.88;
+      let weight = 1.5;
+      let color = '#ffffff';
+
+      if (uf === 'SP') fillColor = '#7C3AED';
+      else if (uf === 'MG') fillColor = '#0B3B9E';
+
+      if (currentFilter !== 'all') {
+        let isHighlighted = false;
+
+        if (currentFilter === 'diego') {
+          isHighlighted = (meta.key === 'diego' || uf === 'SP');
+          if (uf === 'SP') fillColor = '#059669';
+        } else if (currentFilter === 'lorena_marcela') {
+          isHighlighted = (uf === 'SP');
+          if (uf === 'SP') fillColor = '#7C3AED';
+        } else if (currentFilter === 'amanda') {
+          isHighlighted = (meta.key === 'amanda' || uf === 'MG');
+          if (uf === 'MG') fillColor = '#0B3B9E';
+        } else if (currentFilter === 'joao') {
+          isHighlighted = (meta.key === 'joao' || uf === 'SP' || uf === 'RJ' || uf === 'ES');
+          if (uf === 'SP') fillColor = '#FF5A00';
+        } else if (currentFilter === 'murilo') {
+          isHighlighted = (meta.key === 'murilo' || uf === 'MG');
+          if (uf === 'MG') fillColor = '#E11D48';
+        }
+
+        if (isHighlighted) {
+          fillOpacity = 0.95;
+          weight = 2.5;
+          color = '#ffffff';
+        } else {
+          fillOpacity = 0.14;
+          weight = 1;
+          color = '#CBD5E1';
+        }
+      }
+
+      if (selectedUf === uf) {
+        weight = 3.5;
+        color = '#FF5A00';
+        fillOpacity = 0.98;
+      }
+
+      return {
+        fillColor: fillColor,
+        weight: weight,
+        opacity: 1,
+        color: color,
+        fillOpacity: fillOpacity
+      };
+    }
+
+    function renderGeoJsonLayer(geoData) {
+      if (geoJsonLayer) {
+        map.removeLayer(geoJsonLayer);
+      }
+
+      labelMarkers.forEach(m => map.removeLayer(m));
+      labelMarkers = [];
+
+      geoJsonLayer = L.geoJSON(geoData, {
+        style: getFeatureStyle,
+        onEachFeature: function(feature, layer) {
+          const uf = extractUfCode(feature);
+          const meta = statesMeta[uf];
+          if (!meta) return;
+
+          const tooltipContent = `
+            <div class="leading-snug">
+              <div class="flex items-center justify-between gap-3 font-extrabold text-hap-blue dark:text-sky-400 mb-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-hap-blue text-white font-mono">${uf}</span>
+                  <span>${meta.name}</span>
+                </div>
+                <span class="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded">${meta.citiesCount} mun.</span>
+              </div>
+              <div class="text-[11px] text-slate-600 dark:text-slate-300"><strong>Macrorregião:</strong> ${meta.macro}</div>
+              <div class="text-[11px] text-slate-800 dark:text-slate-100 mt-1"><strong>Gerência:</strong> ${meta.manager}</div>
+              ${meta.isShared ? '<div class="text-[10px] text-hap-orange font-bold mt-1">★ Clique para ver todas as cidades por gerente</div>' : ''}
+            </div>
+          `;
+
+          layer.bindTooltip(tooltipContent, {
+            sticky: true,
+            className: 'custom-leaflet-tooltip',
+            direction: 'auto'
+          });
+
+          layer.on({
+            mouseover: function(e) {
+              const l = e.target;
+              l.setStyle({
+                weight: 2.8,
+                color: '#0B3B9E',
+                fillOpacity: 0.98
+              });
+              l.bringToFront();
+              if (!selectedUf) {
+                updateInspectorCard(uf, meta, false);
+              }
+            },
+            mouseout: function(e) {
+              geoJsonLayer.resetStyle(e.target);
+              if (!selectedUf) {
+                resetInspectorCard();
+              }
+            },
+            click: function(e) {
+              if (selectedUf === uf) {
+                selectedUf = null;
+                resetInspectorCard();
+              } else {
+                selectedUf = uf;
+                updateInspectorCard(uf, meta, true);
+              }
+              geoJsonLayer.setStyle(getFeatureStyle);
+              map.fitBounds(layer.getBounds(), { maxZoom: 6, padding: [25, 25] });
+            }
+          });
+
+          if (stateCentroids[uf]) {
+            const labelIcon = L.divIcon({
+              className: 'state-label-marker',
+              html: `<div class="state-label-text">${uf}${meta.isShared ? '*' : ''}</div>`,
+              iconSize: [28, 16],
+              iconAnchor: [14, 8]
+            });
+            const m = L.marker(stateCentroids[uf], { icon: labelIcon, interactive: false });
+            m.addTo(map);
+            labelMarkers.push(m);
+          }
+        }
+      }).addTo(map);
+
+      try {
+        map.fitBounds(geoJsonLayer.getBounds(), { padding: [12, 12] });
+      } catch (e) {
+        map.setView([-14.235, -51.925], 4);
+      }
+    }
+
+    function updateInspectorCard(uf, meta, isFixed) {
+      const inspectUfTitle = document.getElementById('inspectUfTitle');
+      const inspectUfSubtitle = document.getElementById('inspectUfSubtitle');
+      const inspectUfBadge = document.getElementById('inspectUfBadge');
+      const inspectManagerName = document.getElementById('inspectManagerName');
+      const inspectManagerRole = document.getElementById('inspectManagerRole');
+      const inspectScopeDetails = document.getElementById('inspectScopeDetails');
+      const btnArea = document.getElementById('inspectActionButtons');
+
+      if (inspectUfTitle) {
+        inspectUfTitle.innerHTML = `
+          <span>${meta.name}</span>
+          <span class="text-xs font-mono bg-blue-50 dark:bg-slate-800 text-hap-blue dark:text-sky-400 px-2 py-0.5 rounded-md border border-blue-200 dark:border-slate-700">${meta.citiesCount} mun.</span>
+          ${isFixed ? '<span class="text-[10px] bg-hap-orange text-white font-bold px-2 py-0.5 rounded-full">Fixado</span>' : ''}
+        `;
+      }
+      if (inspectUfSubtitle) inspectUfSubtitle.innerText = `${meta.macro} • Base Oficial Consolidada`;
+      if (inspectUfBadge) {
+        inspectUfBadge.innerText = uf;
+        inspectUfBadge.style.borderColor = meta.color;
+        inspectUfBadge.style.color = meta.color;
+      }
+
+      if (inspectManagerName) {
+        inspectManagerName.innerHTML = `
+          <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${meta.color}"></span>
+          <span class="text-slate-800 dark:text-slate-100">${meta.manager}</span>
+        `;
+      }
+
+      if (inspectManagerRole) {
+        inspectManagerRole.innerText = meta.isShared ? 
+          "Estado de Gestão Compartilhada: Mapeamento nominal município a município na planilha." : 
+          `Cobertura Integral da UF: Todos os ${meta.citiesCount} municípios do estado estão alocados para esta gerência médica.`;
+      }
+
+      if (inspectScopeDetails) {
+        inspectScopeDetails.innerHTML = `<div class="whitespace-pre-line font-sans text-xs text-slate-700 dark:text-slate-300">${meta.scope}</div>`;
+      }
+
+      if (btnArea) {
+        btnArea.classList.remove('hidden');
+        if (uf === 'SP') {
+          btnArea.innerHTML = `
+            <div class="grid grid-cols-1 gap-2">
+              <button onclick="openSpModal('managers')" class="w-full py-2.5 px-4 bg-hap-orange hover:bg-hap-orangeHover text-white font-bold rounded-full text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                <i class="ph-bold ph-buildings text-base"></i>
+                Abrir Painel São Paulo (645 Cidades & RAs 14/16)
+              </button>
+            </div>
+          `;
+        } else if (uf === 'MG') {
+          btnArea.innerHTML = `
+            <button onclick="openMgModal()" class="w-full py-2.5 px-4 bg-hap-blue hover:bg-hap-blueDark text-white font-bold rounded-full text-xs flex items-center justify-center gap-2 shadow-sm transition">
+              <i class="ph-bold ph-tree-structure text-base"></i>
+              Abrir Painel Minas Gerais (639 Amanda x 214 Murilo)
+            </button>
+          `;
+        } else {
+          btnArea.innerHTML = `
+            <button onclick="openDirectoryModal('${uf}')" class="w-full py-2.5 px-4 bg-hap-blue hover:bg-hap-blueDark text-white font-bold rounded-full text-xs flex items-center justify-center gap-2 shadow-sm transition">
+              <i class="ph-bold ph-list-magnifying-glass text-base"></i>
+              Consultar Municípios de ${meta.name} (${uf})
+            </button>
+          `;
+        }
+      }
+    }
+
+    function resetInspectorCard() {
+      const inspectUfTitle = document.getElementById('inspectUfTitle');
+      const inspectUfSubtitle = document.getElementById('inspectUfSubtitle');
+      const inspectUfBadge = document.getElementById('inspectUfBadge');
+      const inspectManagerName = document.getElementById('inspectManagerName');
+      const inspectManagerRole = document.getElementById('inspectManagerRole');
+      const inspectScopeDetails = document.getElementById('inspectScopeDetails');
+      const btnArea = document.getElementById('inspectActionButtons');
+
+      if (inspectUfTitle) inspectUfTitle.innerHTML = `<span>Selecione uma UF ou Gerente</span>`;
+      if (inspectUfSubtitle) inspectUfSubtitle.innerText = "Passe o mouse ou clique no mapa para examinar";
+      if (inspectUfBadge) {
+        inspectUfBadge.innerText = "BR";
+        inspectUfBadge.style.borderColor = "#0B3B9E";
+        inspectUfBadge.style.color = "#0B3B9E";
+      }
+
+      if (inspectManagerName) {
+        inspectManagerName.innerHTML = `
+          <span class="w-2.5 h-2.5 rounded-full bg-hap-blue"></span>
+          <span>Visão Panorâmica Nacional</span>
+        `;
+      }
+      if (inspectManagerRole) {
+        inspectManagerRole.innerText = "Base oficial de 5.570 municípios brasileiros 100% distribuídos por gerência médica, incluindo as RAs 14 (Franca) e 16 (Itapeva) alocadas para João Henrique.";
+      }
+      
+      if (inspectScopeDetails) {
+        inspectScopeDetails.innerHTML = `
+          • Amanda Regina: 2.883 municípios (N + NE + 10 Mesos MG)<br>
+          • Diego Godoi: 1.500 municípios (PR, SC, RS + 6 RAs SP)<br>
+          • Murilo Adolfo: 681 municípios (DF, GO, MT, MS + 2 Mesos MG)<br>
+          • João Henrique: 467 municípios (RJ, ES + 352 SP incl. RAs 14/16)<br>
+          • Lorena & Marcela: 39 municípios (1ª RA Grande SP)
+        `;
+      }
+
+      if (btnArea) {
+        btnArea.classList.remove('hidden');
+        btnArea.innerHTML = `
+          <button onclick="openDirectoryModal('all')" class="w-full py-2.5 px-4 bg-hap-blue hover:bg-hap-blueDark text-white font-bold rounded-full text-xs flex items-center justify-center gap-2 shadow-sm transition">
+            <i class="ph-bold ph-magnifying-glass text-base"></i>
+            Consultar Todos os Municípios da Base
+          </button>
+        `;
+      }
+    }
+
+    function setManagerFilter(filterKey) {
+      currentFilter = filterKey;
+
+      document.querySelectorAll('.mgr-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-id') === filterKey) {
+          btn.className = "mgr-filter-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-hap-blue text-white shadow-sm border border-hap-blue transition flex items-center gap-1.5";
+        } else {
+          btn.className = "mgr-filter-btn px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition flex items-center gap-1.5";
+        }
+      });
+
+      const badge = document.getElementById('currentStatusBadge');
+      const badgeTitles = {
+        'all': 'Visualização Nacional Completa (5.570 Municípios)',
+        'diego': 'Diego Godoi: 1.500 Municípios (1.191 Sul + 309 SP Oeste)',
+        'lorena_marcela': 'Lorena & Marcela: 39 Municípios (1ª RA Grande SP)',
+        'amanda': 'Amanda Regina: 2.883 Municípios (N + NE + 639 em MG)',
+        'joao': 'João Henrique: 467 Municípios (352 SP incl. RAs 14/16 + 92 RJ + 78 ES)',
+        'murilo': 'Murilo Adolfo: 681 Municípios (467 CO + 214 MG Sul/Triângulo)'
+      };
+      badge.innerText = badgeTitles[filterKey] || 'Visualização Filtrada';
+
+      if (geoJsonLayer) {
+        geoJsonLayer.setStyle(getFeatureStyle);
+      }
+    }
+
+    function resetAllViews() {
+      selectedUf = null;
+      setManagerFilter('all');
+      resetInspectorCard();
+      if (map) {
+        map.setView([-14.235, -51.925], 4);
+      }
+    }
+
+    function handleGlobalSearch(term) {
+      const q = term.toLowerCase().trim();
+      if (!q) {
+        resetAllViews();
+        return;
+      }
+
+      for (let uf in statesMeta) {
+        const item = statesMeta[uf];
+        if (uf.toLowerCase() === q || item.name.toLowerCase() === q) {
+          selectedUf = uf;
+          updateInspectorCard(uf, item, true);
+          if (geoJsonLayer) geoJsonLayer.setStyle(getFeatureStyle);
+          if (stateCentroids[uf] && map) map.setView(stateCentroids[uf], 6);
+          return;
+        }
+      }
+
+      const match = allMunicipalitiesIndex.find(m => m.city.toLowerCase().includes(q));
+      if (match) {
+        selectedUf = match.uf;
+        const meta = statesMeta[match.uf];
+        updateInspectorCard(match.uf, meta, true);
+        const inspectScopeDetails = document.getElementById('inspectScopeDetails');
+        if (inspectScopeDetails) {
+          inspectScopeDetails.innerHTML = `
+            <div class="p-2 mb-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg text-amber-950 dark:text-amber-200 font-sans">
+              <strong>Município Localizado:</strong> ${match.city} (${match.uf})<br>
+              <strong>Gerente na Planilha:</strong> ${match.manager}<br>
+              <strong>Região:</strong> ${match.region}
+            </div>
+            <div class="whitespace-pre-line font-sans text-xs text-slate-700 dark:text-slate-300">${meta.scope}</div>
+          `;
+        }
+        if (geoJsonLayer) geoJsonLayer.setStyle(getFeatureStyle);
+        if (stateCentroids[match.uf] && map) map.setView(stateCentroids[match.uf], 6);
+        return;
+      }
+
+      if (q.includes('diego') || q.includes('godoi')) setManagerFilter('diego');
+      else if (q.includes('lorena') || q.includes('marcela')) setManagerFilter('lorena_marcela');
+      else if (q.includes('amanda') || q.includes('lira')) setManagerFilter('amanda');
+      else if (q.includes('joao') || q.includes('joão') || q.includes('souza')) setManagerFilter('joao');
+      else if (q.includes('murilo') || q.includes('adolfo')) setManagerFilter('murilo');
+    }
+
+    function openSpModal(initialTab = 'managers') {
+      document.getElementById('spModal').classList.remove('hidden');
+      setSpModalTab(initialTab);
+    }
+
+    function closeSpModal() {
+      document.getElementById('spModal').classList.add('hidden');
+    }
+
+    function setSpModalTab(tab) {
+      currentSpTab = tab;
+      const tabManagers = document.getElementById('spTabManagersContent');
+      const tabList = document.getElementById('spTabListContent');
+      const searchInput = document.getElementById('spModalCitySearch');
+      if (searchInput) searchInput.value = '';
+
+      const tabs = {
+        'managers': document.getElementById('btnSpTabManagers'),
+        'cities': document.getElementById('btnSpTabCities'),
+        'diego': document.getElementById('btnSpTabDiego'),
+        'joao': document.getElementById('btnSpTabJoao')
+      };
+
+      Object.keys(tabs).forEach(k => {
+        if (!tabs[k]) return;
+        if (k === tab) {
+          tabs[k].className = "px-3.5 py-2 text-xs font-bold text-hap-blue border-b-2 border-hap-orange bg-white dark:bg-slate-900 dark:text-sky-400 rounded-t-lg transition flex items-center gap-1.5";
+        } else {
+          tabs[k].className = "px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5";
+        }
+      });
+
+      if (tab === 'managers') {
+        tabManagers.classList.remove('hidden');
+        tabList.classList.add('hidden');
+      } else {
+        tabManagers.classList.add('hidden');
+        tabList.classList.remove('hidden');
+        filterSpModalCities('');
+      }
+    }
+
+    function getActiveSpList() {
+      if (currentSpTab === 'cities') return { list: rmspCitiesList, dot: 'bg-purple-600', label: 'A definir entre Lorena & Marcela (39)' };
+      if (currentSpTab === 'diego') return { list: spDiegoCitiesList, dot: 'bg-emerald-600', label: 'Diego Godoi em SP (309)' };
+      if (currentSpTab === 'joao') return { list: spJoaoCitiesList, dot: 'bg-hap-orange', label: 'João Henrique em SP (352 • Inclui RAs 14 e 16)' };
+      return { list: rmspCitiesList, dot: 'bg-purple-600', label: 'Municípios' };
+    }
+
+    function filterSpModalCities(term) {
+      const q = term.toLowerCase().trim();
+      const active = getActiveSpList();
+      const filtered = active.list.filter(c => c.toLowerCase().includes(q));
+      const container = document.getElementById('spModalGrid');
+      const countBadge = document.getElementById('spModalCountBadge');
+
+      countBadge.innerText = `${filtered.length} de ${active.list.length} • ${active.label}`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-6 text-center text-slate-500">Nenhum município localizado com esse termo neste recorte.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(city => `
+        <div class="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between hover:border-hap-blue shadow-2xs transition">
+          <span class="text-slate-700 dark:text-slate-200 font-semibold">${city}</span>
+          <span class="w-2.5 h-2.5 rounded-full ${active.dot} shrink-0"></span>
+        </div>
+      `).join('');
+    }
+
+    function openMgModal() {
+      document.getElementById('mgModal').classList.remove('hidden');
+      setMgModalTab('summary');
+    }
+
+    function closeMgModal() {
+      document.getElementById('mgModal').classList.add('hidden');
+    }
+
+    function setMgModalTab(tab) {
+      currentMgTab = tab;
+      const summaryContent = document.getElementById('mgTabSummaryContent');
+      const listContent = document.getElementById('mgTabListContent');
+      const searchInput = document.getElementById('mgModalCitySearch');
+      if (searchInput) searchInput.value = '';
+
+      const btns = {
+        'summary': document.getElementById('btnMgTabSummary'),
+        'amanda': document.getElementById('btnMgTabAmanda'),
+        'murilo': document.getElementById('btnMgTabMurilo')
+      };
+
+      Object.keys(btns).forEach(k => {
+        if (!btns[k]) return;
+        if (k === tab) {
+          btns[k].className = "px-4 py-2 text-xs font-bold text-hap-blue border-b-2 border-hap-orange bg-white dark:bg-slate-900 dark:text-sky-400 rounded-t-lg transition flex items-center gap-1.5";
+        } else {
+          btns[k].className = "px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-hap-blue border-b-2 border-transparent transition flex items-center gap-1.5";
+        }
+      });
+
+      if (tab === 'summary') {
+        summaryContent.classList.remove('hidden');
+        listContent.classList.add('hidden');
+      } else {
+        summaryContent.classList.add('hidden');
+        listContent.classList.remove('hidden');
+        filterMgModalCities('');
+      }
+    }
+
+    function filterMgModalCities(term) {
+      const q = term.toLowerCase().trim();
+      const isAmanda = currentMgTab === 'amanda';
+      const sourceList = isAmanda ? mgAmandaCitiesList : mgMuriloCitiesList;
+      const dotClass = isAmanda ? 'bg-hap-blue' : 'bg-rose-600';
+      const managerLabel = isAmanda ? 'Amanda Regina em MG (639)' : 'Murilo Adolfo em MG (214)';
+
+      const filtered = sourceList.filter(c => c.toLowerCase().includes(q));
+      const container = document.getElementById('mgModalGrid');
+      const countBadge = document.getElementById('mgModalCountBadge');
+
+      countBadge.innerText = `${filtered.length} de ${sourceList.length} • ${managerLabel}`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="col-span-full py-6 text-center text-slate-500">Nenhum município mineiro encontrado com esse filtro.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(city => `
+        <div class="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between hover:border-hap-blue shadow-2xs transition">
+          <span class="text-slate-700 dark:text-slate-200 font-semibold">${city}</span>
+          <span class="w-2.5 h-2.5 rounded-full ${dotClass} shrink-0"></span>
+        </div>
+      `).join('');
+    }
+
+    function openDirectoryModal(ufFilter = 'all') {
+      document.getElementById('directoryModal').classList.remove('hidden');
+      const ufSelect = document.getElementById('dirUfSelect');
+      if (ufSelect && ufFilter) {
+        ufSelect.value = ufFilter === 'all' ? 'all' : ufFilter;
+      }
+      renderDirectoryTable();
+    }
+
+    function closeDirectoryModal() {
+      document.getElementById('directoryModal').classList.add('hidden');
+    }
+
+    function renderDirectoryTable() {
+      const q = (document.getElementById('dirSearchInput')?.value || '').toLowerCase().trim();
+      const uf = document.getElementById('dirUfSelect')?.value || 'all';
+      const mgr = document.getElementById('dirManagerSelect')?.value || 'all';
+
+      const filtered = allMunicipalitiesIndex.filter(item => {
+        if (uf !== 'all' && item.uf !== uf) return false;
+        if (mgr !== 'all' && !item.manager.toLowerCase().includes(mgr.toLowerCase())) return false;
+        if (q && !item.city.toLowerCase().includes(q) && !item.state.toLowerCase().includes(q) && !item.manager.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById('dirTableBody');
+      const countEl = document.getElementById('dirResultCount');
+      countEl.innerText = `Exibindo ${Math.min(filtered.length, 300)} de ${filtered.length} municípios localizados (Base Nacional: 5.570 municípios)`;
+
+      const badgeColors = {
+        'Amanda': 'bg-blue-50 dark:bg-blue-950/60 text-hap-blue dark:text-sky-400 border-blue-200 dark:border-blue-900',
+        'Diego': 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900',
+        'Murilo': 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-900',
+        'João Henrique': 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-900',
+        'A definir entre Lorena & Marcela': 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-900'
+      };
+
+      tbody.innerHTML = filtered.slice(0, 300).map(row => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+          <td class="py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">${row.state}</td>
+          <td class="py-2.5 px-3 font-mono font-bold text-hap-blue dark:text-sky-400">${row.uf}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800 dark:text-slate-100">${row.city}</td>
+          <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400">${row.region}</td>
+          <td class="py-2.5 px-4">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] border ${badgeColors[row.manager] || 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'}">
+              ${row.manager}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function exportDirectoryCsv() {
+      const headers = ["Estado", "UF", "Cidade", "Regiao_Escopo", "Gerente"];
+      const rows = allMunicipalitiesIndex.map(r => [
+        `"${r.state}"`, `"${r.uf}"`, `"${r.city}"`, `"${r.region}"`, `"${r.manager}"`
+      ].join(','));
+      const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'divisao_fidelizacao_rede_hapvida_corrigida.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    window.addEventListener('click', (e) => {
+      const sp = document.getElementById('spModal');
+      const mg = document.getElementById('mgModal');
+      const dir = document.getElementById('directoryModal');
+      if (e.target === sp) closeSpModal();
+      if (e.target === mg) closeMgModal();
+      if (e.target === dir) closeDirectoryModal();
+    });
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn("Fullscreen não autorizado", err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    const stateCentroids = {
+      "AC": [-9.0, -70.5], "AL": [-9.6, -36.6], "AP": [1.4, -51.9], "AM": [-3.4, -65.0],
+      "BA": [-12.5, -41.7], "CE": [-5.2, -39.5], "DF": [-15.8, -47.9], "ES": [-19.5, -40.5],
+      "GO": [-15.9, -50.1], "MA": [-5.4, -45.2], "MT": [-12.6, -55.9], "MS": [-20.5, -54.8],
+      "MG": [-18.5, -44.5], "PA": [-3.9, -52.4], "PB": [-7.1, -36.7], "PR": [-24.8, -51.6],
+      "PE": [-8.3, -37.8], "PI": [-7.4, -42.8], "RJ": [-22.2, -42.5], "RN": [-5.8, -36.6],
+      "RS": [-29.8, -53.5], "RO": [-10.8, -62.8], "RR": [2.0, -61.3], "SC": [-27.3, -50.4],
+      "SP": [-22.1, -49.0], "SE": [-10.5, -37.4], "TO": [-10.2, -48.3]
+    };
+
+    const statesMeta = {
+      "RS": { name: "Rio Grande do Sul", macro: "Região Sul", citiesCount: 497, manager: "Diego Godoi Bernardes da Silva", key: "diego", color: "#059669", scope: "• 497 municípios gaúchos alocados para Diego\n• Macrorregião Sul (RS, SC, PR) + RAs 7–11 e 13 de SP" },
+      "SC": { name: "Santa Catarina", macro: "Região Sul", citiesCount: 295, manager: "Diego Godoi Bernardes da Silva", key: "diego", color: "#059669", scope: "• 295 municípios catarinenses alocados para Diego\n• Macrorregião Sul (SC, PR, RS) + RAs 7–11 e 13 de SP" },
+      "PR": { name: "Paraná", macro: "Região Sul", citiesCount: 399, manager: "Diego Godoi Bernardes da Silva", key: "diego", color: "#059669", scope: "• 399 municípios paranaenses alocados para Diego\n• Macrorregião Sul (PR, SC, RS) + RAs 7–11 e 13 de SP" },
+      
+      "SP": { 
+        name: "São Paulo", 
+        macro: "Região Sudeste", 
+        citiesCount: 645,
+        manager: "Diego (309) • João Henrique (297) • Lorena & Marcela (39)", 
+        key: "split_sp", 
+        color: "#7C3AED", 
+        isShared: true,
+        scope: "• Diego Godoi: 309 municípios (RAs 7 a 11 e 13 - Bauru, S.J. Rio Preto, Araçatuba, Pres. Prudente, Marília, Barretos)\n• João Henrique: 297 municípios (RAs 2 a 6, 12, 14 e 16 - Santos, Registro, SJC, Sorocaba, Campinas, Ribeirão Preto, Central, Franca e Itapeva)\n• Lorena & Marcela: 39 municípios (1ª RA Grande SP)" 
+      },
+
+      "RJ": { name: "Rio de Janeiro", macro: "Região Sudeste", citiesCount: 92, manager: "João Henrique de Souza", key: "joao", color: "#FF5A00", scope: "• 92 municípios fluminenses alocados para João Henrique\n• Atuação conjunta com ES (78) e RAs de SP (297)" },
+      "ES": { name: "Espírito Santo", macro: "Região Sudeste", citiesCount: 78, manager: "João Henrique de Souza", key: "joao", color: "#FF5A00", scope: "• 78 municípios capixabas alocados para João Henrique\n• Atuação conjunta com RJ (92) e RAs de SP (297)" },
+
+      "MG": { 
+        name: "Minas Gerais", 
+        macro: "Região Sudeste", 
+        citiesCount: 853,
+        manager: "Amanda Regina (639) • Murilo Adolfo (214)", 
+        key: "split_mg", 
+        color: "#0B3B9E", 
+        isShared: true,
+        scope: "• Amanda Regina: 639 municípios (10 Mesorregiões do IBGE: BH, Zona da Mata, Vale do Rio Doce, Central, Oeste, Vertentes, Noroeste, Norte, Jequitinhonha, Mucuri)\n• Murilo Adolfo: 214 municípios (2 Mesorregiões: Sul/Sudoeste de Minas e Triângulo Mineiro/Alto Paranaíba)" 
+      },
+
+      "DF": { name: "Distrito Federal", macro: "Centro-Oeste", citiesCount: 1, manager: "Murilo Adolfo Fernandes", key: "murilo", color: "#E11D48", scope: "• 1 município (Brasília) alocado para Murilo Adolfo\n• Atuação com GO, MT, MS e 2 Mesorregiões de MG" },
+      "GO": { name: "Goiás", macro: "Centro-Oeste", citiesCount: 246, manager: "Murilo Adolfo Fernandes", key: "murilo", color: "#E11D48", scope: "• 246 municípios goianos alocados para Murilo Adolfo\n• Atuação com DF, MT, MS e 2 Mesorregiões de MG" },
+      "MT": { name: "Mato Grosso", macro: "Centro-Oeste", citiesCount: 141, manager: "Murilo Adolfo Fernandes", key: "murilo", color: "#E11D48", scope: "• 141 municípios mato-grossenses alocados para Murilo Adolfo\n• Atuação com DF, GO, MS e 2 Mesorregiões de MG" },
+      "MS": { name: "Mato Grosso do Sul", macro: "Centro-Oeste", citiesCount: 79, manager: "Murilo Adolfo Fernandes", key: "murilo", color: "#E11D48", scope: "• 79 municípios sul-mato-grossenses alocados para Murilo Adolfo\n• Atuação com DF, GO, MT e 2 Mesorregiões de MG" },
+
+      "AC": { name: "Acre", macro: "Região Norte", citiesCount: 22, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 22 municípios acrianos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "AP": { name: "Amapá", macro: "Região Norte", citiesCount: 16, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 16 municípios amapaenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "AM": { name: "Amazonas", macro: "Região Norte", citiesCount: 62, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 62 municípios amazonenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "PA": { name: "Pará", macro: "Região Norte", citiesCount: 144, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 144 municípios paraenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "RO": { name: "Rondônia", macro: "Região Norte", citiesCount: 52, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 52 municípios rondonienses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "RR": { name: "Roraima", macro: "Região Norte", citiesCount: 15, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 15 municípios roraimenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "TO": { name: "Tocantins", macro: "Região Norte", citiesCount: 139, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 139 municípios tocantinenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+
+      "AL": { name: "Alagoas", macro: "Região Nordeste", citiesCount: 102, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 102 municípios alagoanos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "BA": { name: "Bahia", macro: "Região Nordeste", citiesCount: 417, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 417 municípios baianos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "CE": { name: "Ceará", macro: "Região Nordeste", citiesCount: 184, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 184 municípios cearenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "MA": { name: "Maranhão", macro: "Região Nordeste", citiesCount: 217, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 217 municípios maranhenses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "PB": { name: "Paraíba", macro: "Região Nordeste", citiesCount: 223, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 223 municípios paraibanos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "PE": { name: "Pernambuco", macro: "Região Nordeste", citiesCount: 185, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 185 municípios pernambucanos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "PI": { name: "Piauí", macro: "Região Nordeste", citiesCount: 224, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 224 municípios piauienses sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "RN": { name: "Rio Grande do Norte", macro: "Região Nordeste", citiesCount: 167, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 167 municípios potiguares sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" },
+      "SE": { name: "Sergipe", macro: "Região Nordeste", citiesCount: 75, manager: "Amanda Regina Marques Lira", key: "amanda", color: "#1D63DC", scope: "• 75 municípios sergipanos sob gestão de Amanda Regina\n• Macrorregião Norte + Nordeste + 10 Mesorregiões MG" }
+    };
+
+    function generateReliableFallbackGeoJson() {
+      const ufs = Object.keys(stateCentroids);
+      const features = ufs.map(uf => {
+        const c = stateCentroids[uf];
+        const d = 1.3;
+        return {
+          type: "Feature",
+          id: uf,
+          properties: { sigla: uf, name: statesMeta[uf]?.name || uf },
+          geometry: {
+            type: "Polygon",
+            coordinates: [[
+              [c[1] - d, c[0] - d],
+              [c[1] + d, c[0] - d],
+              [c[1] + d, c[0] + d],
+              [c[1] - d, c[0] + d],
+              [c[1] - d, c[0] - d]
+            ]]
+          }
+        };
+      });
+      return { type: "FeatureCollection", features: features };
+    }
+
+    window.onload = function() {
+      buildMunicipalitiesIndex();
+      initLeafletMap();
+    };
+  </script>
+</body>
+</html>
